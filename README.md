@@ -8,6 +8,11 @@
 
 把散落在微信、QQ、抖音里的收藏表情，整理成一份干净的图库。
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-FFD23F.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-625%20passed-15C4C4.svg)](#开发)
+[![Python](https://img.shields.io/badge/python-3.11%2B-7C4DFF.svg)](pyproject.toml)
+[![Platform](https://img.shields.io/badge/platform-Windows-FF3D8F.svg)](#快速开始)
+
 </div>
 
 ![界面](docs/em011-perf-evidence/step1-wechat-running.png)
@@ -59,7 +64,8 @@
 ### 从源码跑
 
 ```bash
-git clone <repo> && cd mymeme
+git clone https://github.com/Abird64/give-me-back-my-memes.git
+cd give-me-back-my-memes
 python -m venv .venv
 .venv/Scripts/python.exe -m pip install -e ".[dev]"
 .venv/Scripts/python.exe -m emoji_migrator.webui      # 图形界面
