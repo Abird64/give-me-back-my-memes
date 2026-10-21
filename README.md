@@ -142,4 +142,13 @@ fixtures/               测试素材生成器（不含任何真实用户数据�
 
 ## 许可
 
-（待定）
+本项目采用 [MIT 许可证](LICENSE) © 2026 Abird
+
+随包分发的第三方组件各自保留原许可，全文与组件清单见 [`docs/licenses/`](docs/licenses/)：
+
+| 组件 | 许可 | 说明 |
+| --- | --- | --- |
+| PySide6 / Shiboken6 | **LGPL-3.0** | 分发时必须随附许可证全文，见 `docs/licenses/NOTICE.md` |
+| `f2`（abogus 签名实现） | Apache-2.0 | vendor 代码，逐字未改，provenance 见文件头 |
+| `gmssl` | BSD | vendor 代码，SM3 哈希辅助函数 |
+| Pillow / imageio / numpy / pycryptodome | 各自原许可 | 全文在 `docs/licenses/` |
