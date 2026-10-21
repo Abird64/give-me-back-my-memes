@@ -116,7 +116,7 @@ _DOC_ALLOWED: dict[str, tuple[int, ...]] = {
 #: + 3（D-17，2026-10-20 人工授权：abogus.py = f2 a_bogus 签名 vendor（Apache-2.0）；
 #:   _gmssl_sm3.py / _gmssl_func.py = SM3 国密哈希 gmssl vendor（BSD），abogus 的依赖）。
 #: + 1（EM-011，2026-10-21 人工授权：webui.py = WebEngine 前端壳，承载
-#:   《把我的表情还回来！》的 HTML 界面 + QWebChannel 桥；不实现业务算法）。
+#:   《把我的表情还回来》的 HTML 界面 + QWebChannel 桥；不实现业务算法）。
 EXPECTED_MODULE_COUNT = 9 + 14
 
 #: 注释用途标记：出现只读 API 的那一行（或其上一行）必须含此前缀

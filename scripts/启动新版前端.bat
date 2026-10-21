@@ -16,7 +16,7 @@ if not exist ".venv\Scripts\python.exe" (
   exit /b 1
 )
 echo.
-echo   正在启动《把我的表情还回来！》……
+echo   正在启动《把我的表情还回来》……
 echo   （第一次启动可能要等几秒；关掉本窗口即退出程序）
 echo.
 ".venv\Scripts\python.exe" -m emoji_migrator.webui
