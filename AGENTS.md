@@ -180,7 +180,7 @@ EM-005 正文 `allowed_paths` 是 `src` + `tests` + `docs`，但实际落地时�
   `[project.optional-dependencies].build` 声明（BL-17），不进 exe 运行时依赖。
 - 许可证归集：`docs/licenses/`（NOTICE + 各组件全文，LGPL 全文 md5 与 gnu.org 官方对账）；
   构建后须 `cp -r docs/licenses dist/THIRD-PARTY-LICENSES`（与 exe 同级，LGPL 分发义务）。
-- 面向用户的小白版说明是 `docs/08-使用说明（小白版）.md`，**不要**把开发者文档当用户文档。
+- 面向用户的使用说明在 `README.md`（含卸载口径），**不要**把开发者文档当用户文档。
 - ⚠️ **QtWebEngine 打包**：EM-005-B实测坐实 PyInstaller 的 Qt6 hook **只收 15 个 `.qm` 翻译**，
   `QtWebEngineProcess.exe` 的 binaries 逻辑写死在 macOS 分支→ **必须手写 spec 补收**
   `QtWebEngineProcess.exe` + `resources/*.pak`(4) + `icudtl.dat`。

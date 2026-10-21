@@ -5,7 +5,7 @@
 
 - `docs/07-打包发布与验证.md`：spec 全文 + 构建命令 + 产物名（因为 `*.spec` 与
   `build/`、`dist/` 都在 `.gitignore`，**spec 本体不入库**，docs/07 是唯一耐久副本）；
-- `docs/08-使用说明（小白版）.md`：面向用户说明含卸载口径（单文件 exe 删除即卸载）；
+- `README.md`：面向用户的说明含卸载口径（单文件 exe 删除即卸载）；
 - `docs/licenses/NOTICE.md` + `LGPL-3.0-only.txt`：PySide6 LGPL 分发义务的文本就位。
 
 为什么值得单独立文件：这些文档是**分发的合规载体**（LGPL 义务、卸载说明、
@@ -44,8 +44,12 @@ def test_packaging_doc07_is_durable_source_of_truth() -> None:
 
 
 def test_user_guide_covers_uninstall() -> None:
-    """小白版说明含卸载口径：单文件 exe，删除即卸载。"""
-    text = _read(REPO_ROOT / "docs" / "08-使用说明（小白版）.md")
+    """面向用户的说明含卸载口径：单文件 exe，删除即卸载。
+
+    这份说明原在 ``docs/08-使用说明（小白版）.md``，后因它描述的是旧向导界面
+    而删除；用户文档职责由仓库根 ``README.md`` 承担（公开仓库首页更易被看到）。
+    """
+    text = _read(REPO_ROOT / "README.md")
     assert "卸载" in text
     assert "删除" in text
 
