@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emoji-migrator"
+version = "0.1.0"
+description = "把我的表情还回来：跨平台表情格式嗅探、修正、去重与压缩"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Abird" }]
+requires-python = ">=3.11"
+dependencies = [
+    "Pillow",
+    "PySide6",
+    "imageio",
+    "imageio-ffmpeg",
+    "pycryptodome",
+    # 抖音采集 HTTP 客户端（EM-005，人工 2026-10-19 授权，参照 BL-17 口径）：
+    # TLS 指纹伪装穿过基础风控；许可证 MIT。用途与实测见 docs/09-抖音登录链路实测.md。
+    "curl_cffi",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+# 构建期工具（EM-006 打包单 exe 使用，BL-17 人工授权 2026-10-19）：
+# PyInstaller 只在构建时参与，不进入 exe 运行时依赖、不被 src 导入。
+build = [
+    "pyinstaller>=6.22.3",
+]
+
+[project.scripts]
+emoji-migrator = "emoji_migrator.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# 三端图文指引截图（wechat/qq/douyin 各 3 张）须随 wheel 分发：
+# GUI in-app 指引直接读取包内 guides/（BL-10，BL-17 人工授权 2026-10-19）。
+#
+# WebEngine 前端（EM-011）：index.html + 展示体 woff2 也要随包分发——
+# 页面**不联网**（字体已按实际用字裁剪成 82KB，见 design-prototype/ 下的构建脚本），
+# 离线也能正常显示。EM-011 人工授权 2026-10-21。
+[tool.setuptools.package-data]
+"emoji_migrator" = [
+    "guides/**/*.png",
+    "webui/*.html",
+    "webui/fonts/*.woff2",
+    "webui/fonts/*.css",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+# vendor 文件（EM-005 D-17，RUN-20261020-004 人工授权纳入）：第三方代码**不按本仓
+# 风格改写**（保持与上游 diff 最小化，见各文件头部 provenance 块），整体豁免 lint。
+# 其正确性由 tests/test_abogus.py 的 SM3 标准向量 + 签名结构测试守护，不靠 lint。
+[tool.ruff.lint.per-file-ignores]
+"src/emoji_migrator/abogus.py" = ["E", "F", "W", "I", "UP", "B"]
+"src/emoji_migrator/_gmssl_func.py" = ["E", "F", "W", "I", "UP", "B"]
+"src/emoji_migrator/_gmssl_sm3.py" = ["E", "F", "W", "I", "UP", "B"]

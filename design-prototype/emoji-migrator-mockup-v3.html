@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>《把我的表情还回来！》· 设计原型</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   《把我的表情还回来！》 — Memphis / 波普拼贴风格设计原型
+   设计母题来自参考海报：紫粉渐变底 · 纯黑粗描边 · 硬边偏移阴影
+   复古浏览器窗口 · 半调网点 · 四角星芒 · 斜置拼贴
+   ============================================================ */
+
+/* ---------- 设计令牌 ---------- */
+:root{
+  /* 墨线与纸面：不用纯黑纯白 */
+  --ink:        #1B1B1F;
+  --paper:      #FFFCF5;
+  --paper-2:    #F4EDDD;
+
+  /* 主色板（海报原色） */
+  --violet:     #7C4DFF;
+  --violet-d:   #5B2FD6;
+  --magenta:    #FF3D8F;
+  --yellow:     #FFD23F;
+  --teal:       #15C4C4;
+  --orange:     #FF7A2E;
+  --lilac:      #C9B8FF;
+  --pink-soft:  #FFB3D9;
+
+  /* 平台身份色（波普饱和版） */
+  --wx:         #2FBF71;
+  --qq:         #1DA1F2;
+  --dy:         #FF2E4D;
+
+  /* 硬边阴影：全局统一，绝不模糊 */
+  --sh:      6px 6px 0 var(--ink);
+  --sh-sm:   4px 4px 0 var(--ink);
+  --sh-xs:   3px 3px 0 var(--ink);
+  --sh-lg:   11px 11px 0 var(--ink);
+  --bw:      3px;
+
+  --r: 14px;   /* 圆角克制使用：主结构用小圆角，贴纸用大圆角 */
+
+  /* 展示体自带（ZCOOL KuaiLe 仅主标题用，81KB）；
+     正文中文字用系统字体（微软雅黑/PingFang），省掉 Noto Sans SC 全量分片。 */
+  --font-display: 'ZCOOL KuaiLe','Microsoft YaHei','PingFang SC',sans-serif;
+  --font-latin:   'Archivo Black','Microsoft YaHei',sans-serif;
+  --font-body:    'Microsoft YaHei','PingFang SC','Noto Sans SC',system-ui,sans-serif;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+
+/* ⚠️ 页面渐变背景**必须**挂在 html 上，且**不能用 background-attachment:fixed**。
+     实测（2026-10-21，无 GPU 的软件渲染环境，在真实 Qt WebEngine 内滚动测量
+     728 张贴纸 / 页高 15537px）：
+
+       | 方案                    | 平均/帧 | p95     | >32ms 帧数 | 最长任务 |
+       |-------------------------|---------|---------|-----------|---------|
+       | attachment:fixed        | 62.4ms  | 130.7ms | 105       | 176ms    |
+       | 挂在 body（随文档滚）   | 16.1ms  | 17.8ms  | 1| 136ms    |
+       | 挂在 html（当前方案）   | 16.0ms  | 17.0ms  | 1         | 130ms    |
+
+     fixed 版本**慢 3.9 倍**，肉眼就是"滑动时顿"。原因是 fixed 背景在每一帧
+     都要重新做一次整屏三段渐变合成。
+     挂在 html 上时渐变按**视口**尺寸计算、由 canvas 铺满整个滚动区域，
+     视觉与 fixed 无差别，却不参与逐帧重合成。 */
+html{
+  min-height:100%;
+  background-color:var(--violet);
+  background-image:
+    radial-gradient(120% 90% at 8% 0%, #8E5BFF 0%, transparent 58%),
+    radial-gradient(110% 100% at 100% 100%, #FF3D8F 0%, transparent 62%),
+    linear-gradient(140deg,#6B3FE0 0%,#8E4BE8 38%,#E8479B 100%);
+}
+body{
+  min-height:100%;
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:transparent;
+  overflow-x:hidden;
+}
+
+/* ---------- 背景拼贴层 ---------- */
+.deco{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.deco > *{ position:absolute; }
+
+/* 半调网点 */
+.dots{
+  inset:0;
+  background-image:radial-gradient(circle, rgba(27,27,31,.10) 1.4px, transparent 1.5px);
+  background-size:9px 9px;
+  mask-image:linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  opacity:.75;
+}
+/* 左侧黄色不规则色块 */
+.blob-y{
+  left:-6vw; top:26vh; width:38vw; height:78vh;
+  background:var(--yellow);
+  border-radius: 62% 38% 47% 53% / 38% 55% 45% 62%;
+  opacity:.92;
+}
+/* 左下青色块 */
+.block-t{
+  left:8vw; bottom:-14vh; width:34vw; height:42vh;
+  background:var(--teal);
+  border-radius: 46% 54% 30% 70% / 55% 40% 60% 45%;
+  opacity:.9;
+}
+/* 右下粉色块 */
+.block-p{
+  right:-10vw; bottom:-18vh; width:44vw; height:52vh;
+  background:var(--magenta);
+  border-radius: 58% 42% 52% 48% / 40% 60% 40% 60%;
+  opacity:.55;
+}
+/* 斜置格纹条 */
+.stripes{
+  right:4vw; top:12vh; width:220px; height:34px;
+  background:repeating-linear-gradient(45deg, var(--ink) 0 10px, var(--orange) 10px 20px);
+  transform:rotate(-14deg);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+}
+/* 四角星芒 */
+.spark{ width:44px; height:44px; background:var(--yellow); }
+.spark.p{ background:var(--pink-soft); }
+.spark.t{ background:var(--teal); }
+.spark.o{ background:var(--orange); }
+.spark.s{
+  clip-path:polygon(50% 0%, 60% 38%, 96% 22%, 68% 50%, 100% 62%, 60% 62%, 58% 100%, 42% 62%, 8% 76%, 34% 50%, 0% 38%, 40% 38%);
+}
+.spark.outline{
+  background:none;
+  border:4px solid var(--ink);
+  clip-path:none;
+  border-radius:50%;
+  width:58px; height:58px;
+}
+.ring{
+  width:86px; height:86px; border:5px solid var(--ink); border-radius:50%;
+  background:transparent;
+}
+.ring.t{ border-color:var(--teal); border-width:6px; }
+.ring.y{ border-color:var(--yellow); border-width:6px; }
+/* 大箭头 */
+.arrow{
+  width:0; height:0;
+  border-left:52px solid transparent;
+  border-right:52px solid transparent;
+  border-bottom:78px solid var(--paper);
+  filter:drop-shadow(3px 4px 0 var(--ink));
+}
+
+/* ---------- 骨架 ---------- */
+.shell{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:34px 46px 90px; }
+
+/* ---------- 标题海报 ---------- */
+.masthead{ position:relative; margin-bottom:26px; }
+.poster{
+  display:block; width:fit-content; position:relative;
+  background:var(--yellow);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg);
+  padding:20px 30px 22px;
+  transform:rotate(-1.6deg);
+  max-width:100%;
+}
+.poster::after{  /* 胶带 */
+  content:""; position:absolute; top:-13px; left:46%;
+  width:104px; height:26px; background:rgba(255,255,255,.75);
+  border:2px solid var(--ink); transform:rotate(-4deg);
+}
+.hero{
+  font-family:var(--font-display);
+  font-size:clamp(34px, 6.4vw, 78px);
+  line-height:1.06;
+  letter-spacing:.02em;
+  margin:0;
+  color:var(--magenta);
+  -webkit-text-stroke:3.5px var(--ink);
+  paint-order:stroke fill;
+  text-shadow:7px 7px 0 var(--ink);
+}
+.hero .l2{ display:block; color:var(--violet-d); }
+.hero .l3{ display:block; color:var(--teal); }
+.sub-en{
+  font-family:var(--font-latin);
+  font-size:clamp(11px,1.5vw,16px);
+  letter-spacing:.24em;
+  margin:14px 0 0;
+  color:var(--ink);
+}
+.slogan{
+  font-size:14.5px; font-weight:500; color:var(--paper);
+  background:var(--ink);
+  display:block; width:fit-content; max-width:100%;
+  padding:6px 14px;
+  margin:18px 0 0;
+  transform:rotate(1deg);
+  box-shadow:4px 4px 0 var(--yellow);
+}
+.slogan b{ color:var(--yellow); }
+
+/* ---------- 阶段导航：复古浏览器标签 ---------- */
+.tabs{ display:flex; gap:10px; margin:30px 0 0; flex-wrap:wrap; align-items:flex-end; }
+.tab{
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  display:flex; align-items:center; gap:9px;
+  background:var(--paper); color:var(--ink);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:9px 18px;
+  cursor:pointer;
+  transform:translateY(4px);
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1), background .16s ease;
+}
+.tab .n{
+  font-family:var(--font-latin); font-size:11px;
+  background:var(--ink); color:var(--paper);
+  width:20px; height:20px; display:grid; place-items:center;
+}
+.tab:hover{ transform:translateY(-2px); }
+.tab.on{ background:var(--yellow); transform:translateY(0); box-shadow:var(--sh); }
+.tab.on .n{ background:var(--magenta); color:var(--paper); }
+
+/* ---------- 主窗口 ---------- */
+.win{
+  background:var(--paper);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg);
+  margin-top:16px;
+  animation:winIn .34s cubic-bezier(.22,1,.36,1);
+}
+@keyframes winIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+.win-bar{
+  display:flex; align-items:center; gap:12px;
+  background:var(--bar, var(--violet));
+  border-bottom:var(--bw) solid var(--ink);
+  padding:9px 14px;
+}
+.win-bar .dots{ display:flex; gap:7px; }
+.win-bar .dots i{ width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink); background:var(--paper); }
+.win-bar .dots i:nth-child(1){ background:var(--magenta); }
+.win-bar .dots i:nth-child(2){ background:var(--yellow); }
+.win-bar .dots i:nth-child(3){ background:var(--teal); }
+.win-bar .url{
+  font-family:var(--font-latin); font-size:11px; letter-spacing:.08em;
+  background:var(--paper); border:2.5px solid var(--ink);
+  padding:3px 12px; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.win-bar .title{
+  font-weight:900; font-size:14px; color:var(--ink);
+  margin-left:auto; white-space:nowrap;
+}
+.win-body{ padding:26px 28px 30px; }
+
+/* ---------- 阶段 1：导入三端 ---------- */
+.plat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.plat{
+  position:relative; background:var(--paper-2);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh);
+  padding:0 0 20px;
+  overflow:hidden;
+  transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s cubic-bezier(.22,1,.36,1);
+}
+.plat:hover{ transform:translate(-2px,-3px); box-shadow:var(--sh-lg); }
+.plat .cap{
+  background:var(--pc); color:var(--ink);
+  border-bottom:var(--bw) solid var(--ink);
+  padding:8px 14px;
+  font-weight:900; font-size:13px;
+  display:flex; align-items:center; gap:8px;
+}
+.plat .cap .dot{ width:11px; height:11px; border-radius:50%; background:var(--ink); border:2px solid var(--ink); }
+.plat .glyph{
+  height:118px; display:grid; place-items:center;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.55) 0 12px, transparent 13px),
+    var(--pc);
+  border-bottom:var(--bw) solid var(--ink);
+}
+/* 抖音官方标志读法：圆形底 + 白音符。底色随平台色，音符恒为白。 */
+.dy-badge{
+  width:64px; height:64px; border-radius:50%;
+  background:var(--dy); border:3px solid var(--ink);
+  display:grid; place-items:center; box-shadow:3px 3px 0 var(--ink);
+}
+.dy-badge .pico{ width:36px; height:36px; color:#fff; }
+.tgt .ico .dy-badge{ width:56px; height:56px; border-width:2.5px; box-shadow:2px 2px 0 var(--ink); }
+.tgt .ico .dy-badge .pico{ width:30px; height:30px; color:#fff; }
+/* 权重修正：这两条必须压住下面 .plat .glyph .pico / .tgt .ico .pico，
+   否则音符被撑到 58px 溢出圆底（实测踩过）。 */
+.plat .glyph .dy-badge .pico{ width:36px; height:36px; color:#fff; }
+.tgt .ico .dy-badge .pico{ width:30px; height:30px; color:#fff; }
+/* 官方平台矢量图标（微信双气泡 / QQ 企鹅 / 抖音音符），currentColor 跟随底色 */
+.pico{ width:62px; height:62px; display:block; }
+.plat .glyph .pico{ width:58px; height:58px; color:var(--paper); }
+.tgt .ico .pico{ width:50px; height:50px; color:var(--ink); }
+.plat .desc{ font-size:13px; line-height:1.65; color:#3A3A46; padding:14px 16px 0; min-height:74px; }
+.plat .btn{
+  margin:14px 16px 0; width:calc(100% - 32px);
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  background:var(--yellow); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh-sm);
+  padding:12px 10px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.plat .btn:hover:not(:disabled){ background:var(--orange); color:var(--paper); }
+.plat .btn:active:not(:disabled){ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+.plat .btn:disabled{ background:var(--paper-2); color:#8A8A96; cursor:default; box-shadow:var(--sh-xs); }
+.plat .stat{
+  font-size:12px; font-weight:700; color:#4A4A58;
+  padding:12px 16px 0; display:flex; align-items:center; gap:7px;
+}
+.plat .stat .pip{ width:9px; height:9px; border-radius:50%; background:#C0C0CC; border:2px solid var(--ink); }
+.plat.done .stat .pip{ background:var(--wx); }
+.plat.done .stat b{ color:var(--wx); }
+
+/* 一个平台可能有多个动作（抖音=登录 + 采集）→ 按钮竖排 */
+.plat .btn-row{ margin:14px 16px 0; width:calc(100% - 32px); display:flex; flex-direction:column; gap:9px; }
+.plat .btn-row .btn{ margin:0; width:100%; }
+/* 次要按钮（扫码登录）：白底黑边，和主按钮（采集）拉开层级 */
+.plat .btn.sub{ background:var(--paper); color:var(--ink); }
+.plat .btn.sub:hover:not(:disabled){ background:var(--lilac); color:var(--ink); }
+
+/* 「正在做…」的明确视觉反馈。
+   起因（2026-10-21）：微信导出要跑 1~5 分钟，原先点下去按钮只是禁用、
+   文字一闪就没了，用户完全不知道在跑什么。改成：按钮变主色 + 转圈 +
+   卡片下方出进度条，并附「已用时 / 预计」文案。 */
+.plat .btn.running{ background:var(--magenta); color:var(--paper); }
+.plat .btn .spin{
+  display:inline-block; width:13px; height:13px; margin-right:7px;
+  border:2.5px solid currentColor; border-right-color:transparent; border-radius:50%;
+  animation:spin .7s linear infinite; vertical-align:-2px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.plat .bar{
+  margin:12px 16px 0; width:calc(100% - 32px);
+  height:12px; border:var(--bw) solid var(--ink); background:var(--paper);
+  display:none; overflow:hidden;
+}
+.plat .bar.on{ display:block; }
+.plat .bar > i{
+  display:block; height:100%; width:35%;
+  background:repeating-linear-gradient(45deg, var(--ink) 0 8px, var(--magenta) 8px 16px);
+  animation:slide 1.1s linear infinite;
+}
+@keyframes slide{ from{ transform:translateX(-100%); } to{ transform:translateX(320%); } }
+.plat .elapsed{ margin:8px 16px 0; font-size:11.5px; font-weight:700; color:#5A5A68; }
+.plat .elapsed.on{ display:block; }
+
+.tip{
+  margin-top:22px; display:flex; align-items:flex-start; gap:12px;
+  background:var(--lilac); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:13px 17px; font-size:13.5px; line-height:1.6;
+}
+.tip .ico{
+  flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center;
+  background:var(--yellow); border:2.5px solid var(--ink); font-size:15px;
+}
+
+/* ---------- 阶段 2：相册（贴纸册） ---------- */
+.bar-top{
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  padding-bottom:16px; margin-bottom:18px;
+  border-bottom:var(--bw) dashed rgba(27,27,31,.35);
+}
+.search{
+  display:flex; align-items:center; gap:9px; flex:1 1 230px; min-width:0;
+  background:var(--paper-2); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-xs); padding:9px 13px;
+}
+.search input{
+  flex:1; min-width:0; border:0; outline:0; background:transparent;
+  font-family:var(--font-body); font-size:14px; font-weight:700; color:var(--ink);
+}
+.search .mag{ font-size:15px; }
+.btn-ghost{
+  font-family:var(--font-body); font-weight:900; font-size:13px;
+  background:var(--paper); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh-xs);
+  padding:9px 15px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn-ghost:hover{ background:var(--lilac); }
+.btn-ghost:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+
+/* 册页标签 */
+.lbl{
+  font-family:var(--font-latin); font-size:10px; letter-spacing:.18em;
+  color:#5A5A68; margin:0 0 8px;
+}
+.books{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+.book{
+  font-weight:900; font-size:12.5px;
+  border:2.5px solid var(--ink); background:var(--paper);
+  padding:6px 13px; cursor:pointer; box-shadow:var(--sh-xs);
+  display:inline-flex; align-items:center; gap:7px;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.book .sq{ width:9px; height:9px; border:2px solid var(--ink); }
+.book:hover{ transform:translateY(-2px); }
+.book.on{ background:var(--ink); color:var(--paper); }
+.book.on .sq{ background:var(--yellow); border-color:var(--yellow); }
+.book.new{ border-style:dashed; background:var(--paper-2); }
+
+.count-line{ margin-left:auto; font-size:13px; font-weight:700; color:#4A4A58; white-space:nowrap; }
+.count-line b{ font-family:var(--font-latin); font-size:19px; color:var(--magenta); margin:0 3px; }
+
+/* 贴纸册 */
+.sheet{
+  background:var(--paper-2);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh);
+  padding:26px 24px 28px;
+  position:relative;
+}
+.sheet::before{  /* 装订孔 */
+  content:""; position:absolute; left:11px; top:0; bottom:0;
+  border-right:3px dashed rgba(27,27,31,.28);
+}
+.sheet::after{
+  content:""; position:absolute; left:5px; top:26px;
+  width:11px; height:11px; border-radius:50%;
+  background:var(--paper); border:2.5px solid var(--ink);
+  box-shadow:0 40px 0 -1px var(--paper), 0 40px 0 1.5px var(--ink),
+             0 80px 0 -1px var(--paper), 0 80px 0 1.5px var(--ink),
+             0 120px 0 -1px var(--paper), 0 120px 0 1.5px var(--ink);
+}
+.grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(112px,1fr)); gap:22px; padding-left:16px; }
+.sticker{
+  position:relative; aspect-ratio:1; cursor:pointer;
+  background:var(--paper);
+  border:var(--bw) solid var(--ink);
+  border-radius:var(--r);
+  box-shadow:var(--sh-sm);
+  display:grid; place-items:center;
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1);
+}
+.sticker:nth-child(3n){ transform:rotate(-3.2deg); }
+.sticker:nth-child(3n+1){ transform:rotate(2.4deg); }
+.sticker:nth-child(4n){ transform:rotate(-1.4deg); }
+.sticker:hover{ transform:rotate(0deg) translateY(-4px) scale(1.03); box-shadow:var(--sh); z-index:2; }
+.sticker .emo{ font-size:48px; line-height:1; }
+.sticker .tag{
+  position:absolute; left:-2px; top:-2px;
+  font-size:10px; font-weight:900; color:var(--ink);
+  background:var(--tc); border:2.5px solid var(--ink);
+  border-radius:var(--r) 0 var(--r) 0;
+  padding:2px 8px 3px;
+}
+.sticker .grp{
+  position:absolute; right:-2px; bottom:-2px;
+  font-size:10px; font-weight:700; color:var(--paper);
+  background:var(--ink);
+  padding:2px 7px 3px;
+  border-radius:var(--r) 0 var(--r) 0;
+}
+.sticker .pick{
+  position:absolute; right:-9px; top:-9px;
+  width:26px; height:26px; border-radius:50%;
+  background:var(--magenta); border:2.5px solid var(--ink);
+  display:none; place-items:center; color:var(--paper);
+  font-size:13px; font-weight:900;
+}
+.sticker.sel{ border-color:var(--ink); box-shadow:var(--sh); transform:rotate(0deg) scale(1.04); }
+.sticker.sel .pick{ display:grid; }
+.sticker.sel::after{
+  content:""; position:absolute; inset:-3px; border:3px solid var(--magenta);
+  border-radius:var(--r); pointer-events:none;
+}
+.empty{ text-align:center; padding:52px 20px; }
+.empty .big{ font-size:54px; }
+.empty h3{ font-family:var(--font-display); font-size:22px; margin:12px 0 6px; color:var(--violet-d); -webkit-text-stroke:1.5px var(--ink); paint-order:stroke fill; }
+.empty p{ margin:0; color:#5A5A68; font-size:13.5px; }
+
+/* 底部选区托盘 */
+.tray{
+  position:sticky; bottom:0; margin-top:22px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  background:var(--ink); color:var(--paper);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:12px 18px;
+}
+.tray .n{ font-family:var(--font-latin); font-size:26px; color:var(--yellow); }
+.tray .txt{ font-size:13.5px; font-weight:700; }
+.tray .sp{ flex:1; }
+.tray .go{
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  background:var(--yellow); color:var(--ink);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-xs);
+  padding:11px 22px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.tray .go:hover{ background:var(--orange); color:var(--paper); }
+.tray .go:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+
+/* ---------- 阶段 3：导出 ---------- */
+.ticket{
+  background:var(--paper-2); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh); padding:20px 24px;
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  position:relative;
+  margin-bottom:24px;
+}
+.ticket::before,.ticket::after{
+  content:""; position:absolute; left:0; right:0; height:9px;
+  background:repeating-linear-gradient(90deg, var(--ink) 0 9px, transparent 9px 18px);
+}
+.ticket::before{ top:-5px; }
+.ticket::after{ bottom:-5px; }
+.ticket .big{ font-family:var(--font-latin); font-size:56px; line-height:1; color:var(--magenta); }
+.ticket .meta{ font-size:13.5px; line-height:1.7; }
+.ticket .meta b{ font-weight:900; }
+
+.tgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:24px; }
+.tgt{
+  position:relative; text-align:left;
+  background:var(--paper); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm); padding:0 0 18px; cursor:pointer;
+  overflow:hidden;
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1);
+}
+.tgt:hover{ transform:translate(-2px,-3px); box-shadow:var(--sh); }
+.tgt .cap{
+  background:var(--pc); border-bottom:var(--bw) solid var(--ink);
+  padding:8px 14px; font-weight:900; font-size:13px;
+}
+.tgt .ico{
+  height:92px; display:grid; place-items:center;
+  background:var(--paper-2); border-bottom:var(--bw) solid var(--ink);
+}
+/* 格式差异说明：默认只留一行「支持 XXX」+ 问号，悬浮/聚焦才展开完整说明 */
+/* 格式差异说明：默认只留一行「支持 XXX」+ 问号，
+   技术细节用**真实 DOM 元素**做悬浮卡（不用 ::after + attr()）。
+   理由：伪元素方案在无头浏览器里样式注入不可靠，且真实元素可点击、可被读屏软件读出。 */
+.tgt .rules{
+  padding:12px 16px 0; font-size:12.5px; line-height:1.6; color:#4A4A58;
+  display:flex; align-items:center; gap:7px; cursor:help; position:relative;
+  outline:none;
+}
+.tgt .rules .q{
+  font-style:normal; font-size:11px; font-weight:900; font-family:var(--font-latin);
+  width:17px; height:17px; border-radius:50%; display:grid; place-items:center;
+  background:var(--yellow); border:2px solid var(--ink); color:var(--ink);
+}
+.tgt .rules b{ color:var(--ink); }
+.tipbox{
+  position:absolute; left:16px; bottom:calc(100% + 8px);
+  width:max-content; max-width:250px;
+  background:var(--ink); color:var(--paper);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-xs);
+  padding:9px 12px; font-size:12px; line-height:1.6; font-weight:500;
+  opacity:0; visibility:hidden; transform:translateY(6px);
+  transition:opacity .16s ease, transform .16s cubic-bezier(.22,1,.36,1);
+  z-index:20; white-space:normal; text-align:left; pointer-events:none;
+}
+.tgt:hover .tipbox, .tgt:focus-within .tipbox, .tipbox.show{
+  opacity:1; visibility:visible; transform:translateY(0);
+}
+.tgt .rules b{ color:var(--ink); }
+/* 悬浮气泡：技术细节按需揭示，不占默认视觉 */
+.tgt .rules::after{
+  content:attr(data-detail);
+  position:absolute; left:16px; bottom:calc(100% + 8px);
+  width:max-content; max-width:250px;
+  background:var(--ink); color:var(--paper);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-xs);
+  padding:9px 12px; font-size:12px; line-height:1.6; font-weight:500;
+  opacity:0; visibility:hidden; transform:translateY(6px);
+  transition:opacity .16s ease, transform .16s cubic-bezier(.22,1,.36,1), visibility .16s;
+  z-index:20; white-space:normal; text-align:left;
+}
+/* 三条独立规则：合并写时若某个选择器不被支持，整条规则会作废。
+   （实测合并版在 headless chromium 里不生效，拆开才生效。） */
+.tgt .rules:hover::after{ opacity:1; visibility:visible; transform:translateY(0); }
+.tgt .rules:focus-visible::after{ opacity:1; visibility:visible; transform:translateY(0); }
+.tgt .rules.force-show::after{ opacity:1; visibility:visible; transform:translateY(0); }
+.tgt .rules b{ color:var(--ink); }
+.tgt .radio{
+  position:absolute; right:12px; top:12px; width:24px; height:24px; border-radius:50%;
+  border:3px solid var(--ink); background:var(--paper);
+  display:grid; place-items:center; font-size:13px; color:transparent;
+}
+.tgt.on{ box-shadow:var(--sh); transform:translate(-2px,-3px); }
+.tgt.on .radio{ background:var(--magenta); color:var(--paper); }
+.tgt.on .ico{ background:var(--pc); }
+
+.actions{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.go{
+  font-family:var(--font-body); font-weight:900; font-size:16px;
+  background:var(--yellow); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh);
+  padding:15px 34px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.go:hover:not(:disabled){ background:var(--orange); color:var(--paper); }
+.go:active:not(:disabled){ transform:translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+.go:disabled{ background:#D8D4C8; color:#8A8A96; cursor:default; box-shadow:var(--sh-xs); }
+.hint{ font-size:13px; font-weight:700; color:#5A5A68; }
+
+.prog{ height:26px; border:var(--bw) solid var(--ink); background:var(--paper-2); box-shadow:var(--sh-xs); display:none; margin-bottom:22px; overflow:hidden; }
+.prog.on{ display:block; }
+.prog i{ display:block; height:100%; width:0;
+  background:repeating-linear-gradient(45deg, var(--magenta) 0 12px, var(--violet) 12px 24px);
+  transition:width .28s cubic-bezier(.22,1,.36,1); }
+.prog b{ position:absolute; }
+
+.result{ display:none; }
+.result.show{ display:block; animation:winIn .3s cubic-bezier(.22,1,.36,1); }
+.rcard{
+  background:#E9FBF0; border:var(--bw) solid var(--ink); box-shadow:var(--sh);
+  padding:20px 22px;
+}
+.rcard h3{ font-family:var(--font-display); font-size:21px; margin:0 0 12px; color:#0E7A46; -webkit-text-stroke:1.5px var(--ink); paint-order:stroke fill; }
+.rcard .row{ font-size:13.5px; line-height:1.85; }
+.rcard .row span{ color:#3A5A48; }
+.rcard code{ font-family:var(--font-latin); font-size:12px; background:var(--paper); border:2px solid var(--ink); padding:2px 8px; }
+.rbtns{ display:flex; gap:12px; margin-top:16px; flex-wrap:wrap; }
+
+/* ---------- 指引弹窗 ---------- */
+.mask{
+  position:fixed; inset:0; z-index:60; display:none;
+  background:rgba(27,27,31,.62);
+  align-items:center; justify-content:center; padding:24px;
+}
+.mask.on{ display:flex; animation:fade .18s ease; }
+@keyframes fade{ from{opacity:0} to{opacity:1} }
+.modal{
+  background:var(--paper); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg); width:600px; max-width:100%;
+  max-height:88vh; display:flex; flex-direction:column;
+  animation:pop .26s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pop{ from{ transform:translateY(16px) scale(.97); opacity:0 } to{ transform:none; opacity:1 } }
+.gstep{ padding:20px 24px; display:flex; gap:15px; border-bottom:2.5px dashed rgba(27,27,31,.25); }
+.gstep:last-child{ border-bottom:0; }
+.gstep .gn{
+  flex:0 0 38px; height:38px; display:grid; place-items:center;
+  font-family:var(--font-latin); font-size:17px;
+  background:var(--yellow); border:2.5px solid var(--ink);
+  border-radius:50%; box-shadow:var(--sh-xs);
+}
+.gstep h4{ margin:0 0 5px; font-size:15px; font-weight:900; }
+.gstep p{ margin:0; font-size:13px; line-height:1.7; color:#3A3A46; }
+.modal .foot{ padding:14px 24px; border-top:var(--bw) solid var(--ink); background:var(--paper-2); display:flex; gap:12px; }
+.modal .foot .btn-ghost{ flex:1; padding:12px; font-size:14px; }
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed; left:50%; bottom:30px; z-index:80;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--paper);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-sm);
+  padding:12px 22px; font-size:13.5px; font-weight:700;
+  opacity:0; pointer-events:none;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
+}
+.toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width:900px){
+  .plat-grid,.tgrid{ grid-template-columns:1fr; }
+  .tabs{ gap:7px; }
+  .tab{ padding:8px 12px; font-size:13px; }
+  .win-body{ padding:20px 18px 24px; }
+  .grid{ grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:18px; }
+  .hero{ -webkit-text-stroke-width:2.5px; text-shadow:5px 5px 0 var(--ink); }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 背景拼贴 ============ -->
+<div class="deco" aria-hidden="true">
+  <div class="dots"></div>
+  <div class="blob-y"></div>
+  <div class="block-t"></div>
+  <div class="block-p"></div>
+  <div class="stripes"></div>
+  <div class="spark s" style="left:7%;top:12%"></div>
+  <div class="spark s p" style="right:12%;top:9%;width:60px;height:60px"></div>
+  <div class="spark s t" style="right:6%;top:44%;width:36px;height:36px"></div>
+  <div class="spark s o" style="left:4%;bottom:16%"></div>
+  <div class="spark s" style="left:52%;bottom:6%;width:30px;height:30px"></div>
+  <div class="ring y" style="right:16%;bottom:12%"></div>
+  <div class="ring t" style="left:3%;top:52%"></div>
+  <div class="arrow" style="right:8%;bottom:30%;transform:rotate(-14deg)"></div>
+</div>
+
+<div class="shell">
+
+  <!-- ============ 标题海报 ============ -->
+  <header class="masthead">
+    <div class="poster">
+      <h1 class="hero">
+        <span class="l1">把我的表情</span>
+        <span class="l2">还给我！</span>
+      </h1>
+      <p class="sub-en">GIVE ME BACK MY MEMES</p>
+    </div>
+    <p class="slogan">
+      微信 · QQ · 抖音 的表情包，<b>捞出来、归一化、随便挑</b>，再原样送回任何一个聊天窗。
+    </p>
+  </header>
+
+  <!-- ============ 阶段导航 ============ -->
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-v="ingest"><span class="n">1</span>捞表情</button>
+    <button class="tab" data-v="album"><span class="n">2</span>我的相册</button>
+    <button class="tab" data-v="export"><span class="n">3</span>送回去</button>
+  </nav>
+
+  <!-- ============ 阶段 1：捞表情 ============ -->
+  <section class="win" id="v-ingest">
+    <div class="win-bar" style="--bar:var(--yellow)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://collect</span>
+      <span class="title">第 1 步 · 捞表情</span>
+    </div>
+    <div class="win-body">
+      <div class="plat-grid">
+        <div class="plat" id="p-wx" style="--pc:var(--wx)">
+          <div class="cap"><span class="dot"></span>微信</div>
+          <div class="glyph"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213c0 .163.13.295.29.295a.33.33 0 0 0 .167-.054l1.903-1.114a.86.86 0 0 1 .717-.098a10.2 10.2 0 0 0 2.837.403c.276 0 .543-.027.811-.05c-.857-2.578.157-4.972 1.932-6.446c1.703-1.415 3.882-1.98 5.853-1.838c-.576-3.583-4.196-6.348-8.596-6.348M5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178a1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18m5.34 2.867c-1.797-.052-3.746.512-5.28 1.786c-1.72 1.428-2.687 3.72-1.78 6.22c.942 2.453 3.666 4.229 6.884 4.229c.826 0 1.622-.12 2.361-.336a.72.72 0 0 1 .598.082l1.584.926a.3.3 0 0 0 .14.047c.134 0 .24-.111.24-.247c0-.06-.023-.12-.038-.177l-.327-1.233a.6.6 0 0 1-.023-.156a.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983a.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983a.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982" /></svg></div>
+          <p class="desc">读取本机微信收到的表情（含好友发来的收藏）。需微信在运行，约 1~5 分钟，只读不改动。</p>
+          <button class="btn" id="b-wx" onclick="ingest('wx')">导出微信表情</button>
+          <div class="bar" id="bar-wx"><i></i></div>
+          <div class="elapsed" id="t-wx"></div>
+          <div class="stat"><span class="pip"></span><span id="s-wx">还没捞</span></div>
+        </div>
+        <div class="plat" id="p-qq" style="--pc:var(--qq)">
+          <div class="cap"><span class="dot"></span>QQ</div>
+          <div class="glyph"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><path fill="currentColor" d="M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673c.54.065 2.103-2.472 2.103-2.472c0 1.469.756 3.387 2.394 4.771c-.612.188-1.363.479-1.845.835c-.434.32-.379.646-.301.778c.343.578 5.883.369 7.482.189c1.6.18 7.14.389 7.483-.189c.078-.132.132-.458-.301-.778c-.483-.356-1.233-.646-1.846-.836c1.637-1.384 2.393-3.302 2.393-4.771c0 0 1.563 2.537 2.103 2.472c.251-.03.581-1.39-.438-4.673" /></svg></div>
+          <p class="desc">扫描本机 QQ 收藏表情目录（只读探测，秒级完成）。也可以直接把文件夹拖进相册。</p>
+          <div class="btn-row"><button class="btn" id="b-qq" onclick="ingest('qq')">扫描 QQ 表情目录</button></div>
+          <div class="bar" id="bar-qq"><i></i></div>
+          <div class="elapsed" id="t-qq"></div>
+          <div class="stat"><span class="pip"></span><span id="s-qq">还没捞</span></div>
+        </div>
+        <div class="plat" id="p-dy" style="--pc:var(--dy)">
+          <div class="cap"><span class="dot"></span>抖音</div>
+          <div class="glyph"><span class="dy-badge"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="-1.744 -1.700 29.929 29.929" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><defs /><g><g transform="matrix(0.00859214,0,0,-0.00859204,-8.2577042,34.742121)"><g transform="scale(0.1)"><g transform="scale(2.45928)"><path style="fill-rule:evenodd;stroke:none" d="m 11590.2,11821.7 -0.1,-197.4 h -0.3 V 8970 c 0,-632.83 -249.2,-1234.67 -696.6,-1682.12 -447.5,-447.41 -1049.37,-696.55 -1681.99,-696.55 -632.79,0 -1234.55,249.14 -1681.96,696.55 -447.41,447.45 -696.71,1049.29 -696.71,1682.12 0,632.79 249.3,1234.5 696.71,1681.9 447.41,447.5 1049.17,696.7 1681.96,696.7 h 441.39 v -1250.4 h -441.39 c -300.42,0 -585.42,-118.07 -797.88,-330.53 -212.38,-212.42 -330.34,-497.3 -330.34,-797.67 0,-300.42 117.96,-585.42 330.34,-797.84 212.46,-212.3 497.46,-330.46 797.88,-330.46 300.37,0 585.37,118.16 797.79,330.46 212.3,212.42 330.4,497.3 330.4,795.2 v 4769.54 h 1245.2 l 62.4,-115.5 c 193.9,-359.3 455.4,-699.9 779.7,-951.3 250.8,-194.4 534.6,-331.6 848.1,-386.5 l 221.7,-38.9 -237.9,-1205.5 -213,38 c -253.7,45.4 -502.8,122.3 -736,232.3 -267.7,126.2 -516,296.6 -719.4,512.2 z m -1425.6,4478 c -3388.66,0 -6135.58,-2746.9 -6135.58,-6135.6 0,-3388.49 2746.92,-6135.52 6135.58,-6135.52 3388.5,0 6135.4,2747.03 6135.4,6135.52 0,3388.7 -2746.9,6135.6 -6135.4,6135.6 v 0" /></g></g></g></g></svg></span></div>
+          <p class="desc">两步走：先用抖音 App 扫码登录（本工具只读你的收藏表情），登录完再点采集。WebP 自动转成 GIF，跨页去重。</p>
+          <div class="btn-row">
+            <button class="btn sub" id="b-dy-login" onclick="douyinLogin()">扫码登录</button>
+            <button class="btn" id="b-dy" onclick="ingest('dy')" disabled>采集收藏表情</button>
+          </div>
+          <div class="bar" id="bar-dy"><i></i></div>
+          <div class="elapsed" id="t-dy"></div>
+          <div class="stat"><span class="pip"></span><span id="s-dy">还没捞</span></div>
+      <div class="tip">
+        <span class="ico">💡</span>
+        <span>捞不是唯一的入口——<b>文件夹、散图、以前的导出目录</b>，随时都能直接拖进「我的相册」。捞不动的东西，硬搬就行。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 阶段 2：我的相册 ============ -->
+  <section class="win" id="v-album" style="display:none">
+    <div class="win-bar" style="--bar:var(--teal)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://album</span>
+      <span class="title">第 2 步 · 我的相册</span>
+    </div>
+    <div class="win-body">
+      <div class="bar-top">
+        <label class="search">
+          <span class="mag">🔍</span>
+          <input id="q" placeholder="搜表情、分类、平台…" oninput="render()" />
+        </label>
+        <button class="btn-ghost" onclick="selAll()">全选</button>
+        <button class="btn-ghost" onclick="selNone()">清空</button>
+        <button class="btn-ghost" onclick="newGroup()">＋ 新建册页</button>
+      </div>
+
+      <p class="lbl">按平台</p>
+      <div class="books" id="f-plat">
+        <span class="book on" data-k="plat" data-v="all"><span class="sq" style="background:var(--violet)"></span>全部</span>
+        <span class="book" data-k="plat" data-v="微信"><span class="sq" style="background:var(--wx)"></span>微信</span>
+        <span class="book" data-k="plat" data-v="QQ"><span class="sq" style="background:var(--qq)"></span>QQ</span>
+        <span class="book" data-k="plat" data-v="抖音"><span class="sq" style="background:var(--dy)"></span>抖音</span>
+      </div>
+
+      <p class="lbl">按册页（分类）</p>
+      <div class="books" id="f-cat">
+        <span class="book on" data-k="cat" data-v="all"><span class="sq" style="background:var(--yellow)"></span>全部</span>
+        <span class="book" data-k="cat" data-v="表情"><span class="sq" style="background:var(--magenta)"></span>表情</span>
+        <span class="book" data-k="cat" data-v="宠物"><span class="sq" style="background:var(--orange)"></span>宠物</span>
+        <span class="book" data-k="cat" data-v="文字"><span class="sq" style="background:var(--lilac)"></span>文字</span>
+        <span class="book" data-k="cat" data-v="节日"><span class="sq" style="background:var(--teal)"></span>节日</span>
+        <span class="book" data-k="cat" data-v="搞笑"><span class="sq" style="background:var(--ink)"></span>搞笑</span>
+      </div>
+
+      <div class="sheet">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="tray">
+        <span class="n" id="selN">0</span>
+        <span class="txt">个已选中 · 挑完就能送回去</span>
+        <span class="sp"></span>
+        <button class="go" onclick="go(2)">下一步：送去任意端 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 阶段 3：送回去 ============ -->
+  <section class="win" id="v-export" style="display:none">
+    <div class="win-bar" style="--bar:var(--magenta)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://export</span>
+      <span class="title">第 3 步 · 送回去</span>
+    </div>
+    <div class="win-body">
+      <div class="ticket">
+        <span class="big" id="e-n">0</span>
+        <div class="meta">
+          选中 <b id="e-n2">0</b> 个表情准备出发<br />
+          导出的是<b>修正后的副本</b>，你原来的文件一个字节都不动
+        </div>
+      </div>
+
+      <div class="tgrid" id="tgrid">
+        <div class="tgt" data-t="微信" style="--pc:var(--wx)" onclick="pickT('微信')">
+          <div class="cap">微信</div>
+          <div class="ico"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213c0 .163.13.295.29.295a.33.33 0 0 0 .167-.054l1.903-1.114a.86.86 0 0 1 .717-.098a10.2 10.2 0 0 0 2.837.403c.276 0 .543-.027.811-.05c-.857-2.578.157-4.972 1.932-6.446c1.703-1.415 3.882-1.98 5.853-1.838c-.576-3.583-4.196-6.348-8.596-6.348M5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178a1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18m5.34 2.867c-1.797-.052-3.746.512-5.28 1.786c-1.72 1.428-2.687 3.72-1.78 6.22c.942 2.453 3.666 4.229 6.884 4.229c.826 0 1.622-.12 2.361-.336a.72.72 0 0 1 .598.082l1.584.926a.3.3 0 0 0 .14.047c.134 0 .24-.111.24-.247c0-.06-.023-.12-.038-.177l-.327-1.233a.6.6 0 0 1-.023-.156a.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.27-.027-.407-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983a.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983a.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982" /></svg></div>
+          <div class="rules" tabindex="0">支持 <b>GIF / PNG</b><i class="q">?</i><span class="tipbox">自动修正后缀与尺寸；动图保留帧数与循环播放。微信自己还会压一次超大表情，可能把动图压成静态图——这是微信的行为，本工具不额外压缩。</span></div>
+          <span class="radio">✓</span>
+        </div>
+        <div class="tgt" data-t="QQ" style="--pc:var(--qq)" onclick="pickT('QQ')">
+          <div class="cap">QQ</div>
+          <div class="ico"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><path fill="currentColor" d="M21.395 15.035a40 40 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a39 39 0 0 0-.802 2.264c-1.021 3.283-.69 4.643-.438 4.673c.54.065 2.103-2.472 2.103-2.472c0 1.469.756 3.387 2.394 4.771c-.612.188-1.363.479-1.845.835c-.434.32-.379.646-.301.778c.343.578 5.883.369 7.482.189c1.6.18 7.14.389 7.483-.189c.078-.132.132-.458-.301-.778c-.483-.356-1.233-.646-1.846-.836c1.637-1.384 2.393-3.302 2.393-4.771c0 0 1.563 2.537 2.103 2.472c.251-.03.581-1.39-.438-4.673" /></svg></div>
+          <div class="rules" tabindex="0">支持 <b>GIF / PNG</b><i class="q">?</i><span class="tipbox">感知哈希去重（按画面内容比对，动态图按逐帧内容判重）。缩略图由 QQ 客户端自己生成，原图不会被改动。</span></div>
+          <span class="radio">✓</span>
+        </div>
+        <div class="tgt" data-t="抖音" style="--pc:var(--dy)" onclick="pickT('抖音')">
+          <div class="cap">抖音</div>
+          <div class="ico"><span class="dy-badge"><svg class="pico" xmlns="http://www.w3.org/2000/svg" viewBox="-1.744 -1.700 29.929 29.929" fill="currentColor" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"><defs /><g><g transform="matrix(0.00859214,0,0,-0.00859204,-8.2577042,34.742121)"><g transform="scale(0.1)"><g transform="scale(2.45928)"><path style="fill-rule:evenodd;stroke:none" d="m 11590.2,11821.7 -0.1,-197.4 h -0.3 V 8970 c 0,-632.83 -249.2,-1234.67 -696.6,-1682.12 -447.5,-447.41 -1049.37,-696.55 -1681.99,-696.55 -632.79,0 -1234.55,249.14 -1681.96,696.55 -447.41,447.45 -696.71,1049.29 -696.71,1682.12 0,632.79 249.3,1234.5 696.71,1681.9 447.41,447.5 1049.17,696.7 1681.96,696.7 h 441.39 v -1250.4 h -441.39 c -300.42,0 -585.42,-118.07 -797.88,-330.53 -212.38,-212.42 -330.34,-497.3 -330.34,-797.67 0,-300.42 117.96,-585.42 330.34,-797.84 212.46,-212.3 497.46,-330.46 797.88,-330.46 300.37,0 585.37,118.16 797.79,330.46 212.3,212.42 330.4,497.3 330.4,795.2 v 4769.54 h 1245.2 l 62.4,-115.5 c 193.9,-359.3 455.4,-699.9 779.7,-951.3 250.8,-194.4 534.6,-331.6 848.1,-386.5 l 221.7,-38.9 -237.9,-1205.5 -213,38 c -253.7,45.4 -502.8,122.3 -736,232.3 -267.7,126.2 -516,296.6 -719.4,512.2 z m -1425.6,4478 c -3388.66,0 -6135.58,-2746.9 -6135.58,-6135.6 0,-3388.49 2746.92,-6135.52 6135.58,-6135.52 3388.5,0 6135.4,2747.03 6135.4,6135.52 0,3388.7 -2746.9,6135.6 -6135.4,6135.6 v 0" /></g></g></g></g></svg></span></div>
+          <div class="rules" tabindex="0">支持 <b>GIF</b><i class="q">?</i><span class="tipbox">WebP 自动转 GIF，透明区域合成白底避免黑边；跨页重复的表情会自动跳过。</span></div>
+          <span class="radio">✓</span>
+        </div>
+      </div>
+
+      <div class="prog" id="prog"><i></i></div>
+
+      <div class="actions">
+        <button class="go" id="doBtn" onclick="doExport()" disabled>开始导出</button>
+        <span class="hint" id="e-hint">先在相册里挑表情，再选一个目标端</span>
+      </div>
+
+      <div class="result" id="res">
+        <div class="rcard">
+          <h3>✅ 导出完成，表情物归原主</h3>
+          <div class="row"><span>导出目录：</span><code id="r-dir">~/emoji-migrator-out/&lt;时间戳&gt;/export</code></div>
+          <div class="row"><span>已导出：</span><b id="r-n">0</b> 个文件（去重后）</div>
+          <div class="row"><span>目标端：</span><b id="r-t">—</b> · <span>格式：</span><b id="r-f">—</b></div>
+          <div class="rbtns">
+            <button class="btn-ghost" onclick="openOut()">打开导出目录</button>
+            <button class="btn-ghost" onclick="guide()">看导入指引</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ 指引弹窗 ============ -->
+<div class="mask" id="mask">
+  <div class="modal">
+    <div class="win-bar" style="--bar:var(--yellow)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url" id="g-url">emoji-migrator://guide</span>
+      <span class="title" id="g-title">导入指引</span>
+    </div>
+    <div id="g-body" style="overflow:auto"></div>
+    <div class="foot"><button class="btn-ghost" onclick="closeG()">知道了</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+/* ================= 数据 ================= */
+const EMO = [
+  ['😀','微信','表情'],['🐱','QQ','宠物'],['🎉','抖音','节日'],['😂','微信','搞笑'],
+  ['🐶','QQ','宠物'],['❤️','抖音','表情'],['🔥','微信','搞笑'],['🍕','QQ','表情'],
+  ['🌟','抖音','节日'],['😎','微信','表情'],['🐰','QQ','宠物'],['🎁','抖音','节日'],
+  ['💡','微信','文字'],['✨','QQ','表情'],['😭','抖音','搞笑'],['🐻','微信','宠物'],
+  ['🍔','QQ','表情'],['⚡','抖音','搞笑'],['🤔','微信','表情'],['🌈','QQ','节日'],
+  ['💯','抖音','文字'],['🐼','微信','宠物'],['😍','QQ','表情'],['🎈','抖音','节日'],
+  ['🕶️','微信','搞笑'],['🍜','QQ','表情'],['🎂','抖音','节日'],['👑','微信','文字'],
+];
+const PLAT_COLOR = { '微信':'var(--wx)', 'QQ':'var(--qq)', '抖音':'var(--dy)' };
+const ITEMS = EMO.map((e,i)=>({ id:i, emo:e[0], plat:e[1], cat:e[2], sel:false, grp:'未分册' }));
+
+let fPlat='all', fCat='all', q='', target=null, view='ingest';
+
+/* ================= 阶段切换 ================= */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const b=e.target.closest('.tab'); if(!b) return;
+  go(b.dataset.v==='ingest'?'ingest':b.dataset.v==='album'?'album':'export');
+});
+function go(v){
+  view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.v===v));
+  ['ingest','album','export'].forEach(k=>{
+    document.getElementById('v-'+k).style.display = k===v ? '' : 'none';
+  });
+  window.scrollTo({ top:0, behavior:'smooth' });
+  if(v==='export') syncExport();
+}
+
+/* ================= 后端桥接 ================= */
+/* 真实实现走 window.bridge（QWebChannel）。无桥接时（浏览器直接打开本文件）
+   降级为演示数据，便于设计与视觉评审。 */
+/* QWebChannel 客户端脚本是**异步加载**的：qwebchannel.js 执行完才会调
+   ourCallback 并把 window.bridge 挂上。故此时若 bridge 还没来，
+   必须等 qtc.on('bridge') 事件，而不是直接判 undefined 了事。
+   （坑：早期版本只写 typeof 检查 → 桥接永远是 undefined → 按钮全走演示分支。） */
+let HAS_BRIDGE = false;
+let BRIDGE_READY = null;
+
+/* ⚠️ 必须 **new QWebChannel(transport, callback)** 才会把 Python 侧注册的对象
+   挂到 window 上；只引 qwebchannel.js 是不够的（那只是定义全局类）。
+   回调收到的是对象名 → 前端 window.bridge 就是 Python 侧 registerObject 的名字。 */
+/* ⚠️ **Qt 6 的 qwebchannel.js 不会把对象挂到 window 上**——
+   它放在 ``channel.objects`` 里（实测：``channel.objects.bridge`` 才是桥接对象，
+   ``window.bridge`` 永远是 undefined）。
+   故这里统一用 ``channel.objects.bridge``，并把它存到 ``window.bridge``
+   供后续代码直接用。 */
+function bindBridge(){
+  if(window.bridge){
+    HAS_BRIDGE = true;
+    return;
+  }
+  if(!window.qt || !window.qt.webChannelTransport){
+    return;   /* 还没注入，等 DOMContentLoaded / load 再试 */
+  }
+  if(typeof window.QWebChannel !== "function"){
+    return;   /* qwebchannel.js 还没执行完 */
+  }
+  try{
+    new window.QWebChannel(window.qt.webChannelTransport, function(channel){
+      var objs = channel.objects || {};
+      if(objs.bridge){
+        window.bridge = objs.bridge;   /* 统一出口 */
+        HAS_BRIDGE = true;
+        refreshBridgeDependentUi();
+      } else {
+        console.warn("QWebChannel 已连上，但没有 bridge 对象", Object.keys(objs));
+      }
+    });
+  }catch(e){
+    console.error("QWebChannel 初始化失败", e);
+  }
+}
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", bindBridge);
+} else {
+  bindBridge();
+}
+/* 页面完全加载后再兜一次（qwebchannel.js 是异步资源，DOMContentLoaded 时可能还没到位） */
+window.addEventListener("load", bindBridge);
+setTimeout(bindBridge, 800);
+const PLAT_LABEL = { wx:"微信", qq:"QQ", dy:"抖音" };
+
+/* 平台图标对应的来源目录名（与后端产物目录约定一致） */
+const PLAT_DIR = { wx:"weixin", qq:"qq", dy:"douyin" };
+
+/* ⚠️ QWebChannel 的槽调用返回 **Promise**（跨进程，必须异步等），
+   不能当同步值用。早期版本直接 `window.bridge.default_out_dir()` 当字符串，
+   拿到的是 "[object Promise]" —— 全链路都要 await。 */
+async function outDir(){
+  return HAS_BRIDGE
+    ? await window.bridge.default_out_dir()
+    : "~/emoji-migrator-out/demo";
+}
+
+/* ---------- 阶段 1：捞 ---------- */
+const N = { wx:412, qq:96, dy:38 };
+const LABEL = PLAT_LABEL;
+
+/* 每个平台的主按钮 id 与默认文案。
+   ⚠️ 不能用 card.querySelector('.btn')：抖音卡片有**两个** .btn
+   （扫码登录 + 采集收藏），querySelector 会抓到第一个（登录），
+   于是「采集」点下去禁用的却是登录按钮。统一按 id 取。 */
+const MAIN_BTN = {
+  wx:{ id:"b-wx", label:"导出微信表情" },
+  qq:{ id:"b-qq", label:"扫描 QQ 表情目录" },
+  dy:{ id:"b-dy", label:"采集收藏表情" },
+};
+/* 长任务的预计耗时（秒），用于「已用时 / 预计」文案 */
+const EXPECT = { wx:240, qq:20, dy:90 };
+
+/* ---------- 「正在做…」的视觉与计时反馈 ----------
+   起因（2026-10-21）：微信导出实测要289 秒，原先点下去按钮只是禁用、
+   文字一闪就没了，用户反馈"点了好像反应不大"——因为既不知道在跑什么，
+   也不知道要跑多久。现在：按钮变主色 + 转圈 + 进度条 + 已用时计时。 */
+let tickTimer = null, tickFrom = 0;
+function markRunning(k, label){
+  const b = document.getElementById(MAIN_BTN[k].id);
+  if(b){
+    b.disabled = true;
+    b.classList.add('running');
+    b.innerHTML = '<span class="spin"></span>' + label;
+  }
+  document.getElementById('bar-'+k).classList.add('on');
+  const el = document.getElementById('t-'+k);
+  el.classList.add('on');
+  tickFrom = Date.now();
+  if(tickTimer) clearInterval(tickTimer);
+  tickTimer = setInterval(()=>{
+    const s = Math.floor((Date.now()-tickFrom)/1000);
+    const m = Math.floor(s/60), r = s%60;
+    const e = EXPECT[k];
+    el.textContent = '已用时 ' + (m ? (m+' 分 '+(r<10?'0':'')+r+' 秒') : (r+' 秒'))
+                  + '（预计约 ' + Math.round(e/60) + ' 分钟，可以切到别的页面看看）';
+  }, 1000);
+}
+function clearRunning(k){
+  if(tickTimer){ clearInterval(tickTimer); tickTimer = null; }
+  const bar = document.getElementById('bar-'+k);
+  if(bar) bar.classList.remove('on');
+  const el = document.getElementById('t-'+k);
+  if(el){ el.classList.remove('on'); el.textContent=''; }
+  const b = document.getElementById(MAIN_BTN[k].id);
+  if(b) b.classList.remove('running');
+}
+
+async function ingest(k){
+  const card=document.getElementById('p-'+k);
+  const base = await outDir();
+  const dir = base + "/collected/" + PLAT_DIR[k];
+
+  if(!HAS_BRIDGE){
+    markRunning(k, '正在捞…');
+    setTimeout(()=>{
+      clearRunning(k);
+      finishIngest(k, N[k], "已加入相册");
+    }, 900);
+    return;
+  }
+
+  markRunning(k, k === 'wx' ? '正在读取微信…' : (k === 'qq' ? '正在扫描…' : '正在采集…'));
+
+  try{
+    if(k === 'qq'){
+      const msg = await window.bridge.scan_qq();
+      if(msg.indexOf("扫描到") !== 0){
+        clearRunning(k); setStatus(k, msg); resetBtn(k, '扫描 QQ 表情目录'); return;
+      }
+      setStatus(k, msg + '，正在收进相册…');
+      const r = await window.bridge.export_memes(dir, "QQ");
+      clearRunning(k);
+      finishIngest(k, 0, r.indexOf("导出完成") === 0 ? msg : r);
+      return;
+    }
+    if(k === 'wx'){
+      const msg = await window.bridge.export_weixin(dir);
+      setStatus(k, msg);
+      return;   /* 真实结果由 bridgeEvent 回调 */
+    }
+    if(k === 'dy'){
+      const msg = await window.bridge.collect_douyin(dir);
+      setStatus(k, msg);
+      if(msg.indexOf("还没登录") === 0 || msg.indexOf("正在进行") === 0){
+        clearRunning(k); resetBtn(k, '采集收藏表情');
+      }
+      return;   /* 真实结果由 bridgeEvent 回调 */
+    }
+  }catch(e){
+    clearRunning(k);
+    setStatus(k, "操作失败：" + (e && e.message ? e.message : e));
+    resetBtn(k, MAIN_BTN[k].label);
+  }
+}
+
+/* ---------- 抖音扫码登录（与采集严格分离） ----------
+   旧实现把「登录」和「采集」塞进同一个按钮：没登录时点它只得到一行提示文字、
+   永远不会弹扫码窗；已登录时又直接开采集，用户完全看不到发生了什么
+   （2026-10-21 用户实测反馈）。这里恢复成两个独立动作。 */
+async function douyinLogin(){
+  if(!HAS_BRIDGE){ toast('（演示）这里会弹出抖音扫码登录窗'); return; }
+  const b = document.getElementById('b-dy-login');
+  b.disabled = true; b.textContent = '请在弹出的窗口里扫码…';
+  try{
+    await window.bridge.douyin_login();   /* 槽返回即窗口已打开 */
+  }catch(e){
+    b.disabled = false; b.textContent = '扫码登录';
+    toast('登录窗没能打开：' + (e && e.message ? e.message : e));
+  }
+}
+
+/* 登录态 → 解锁采集按钮并刷新文案（桥接就绪 / 登录成功后都会调） */
+async function refreshDouyinUi(state){
+  const st = state || (HAS_BRIDGE ? await window.bridge.douyin_login_state() : '未登录');
+  const login = document.getElementById('b-dy-login');
+  const collect = document.getElementById('b-dy');
+  if(!login || !collect) return;
+  if(st === '已登录'){
+    login.textContent = '重新登录';
+    login.disabled = false;
+    collect.disabled = false;
+    setStatus('dy', '已登录，可以采集收藏表情了');
+  }else{
+    login.textContent = '扫码登录';
+    login.disabled = false;
+    collect.disabled = true;
+    setStatus('dy', '还没登录抖音——先点「扫码登录」');
+  }
+}
+
+function setStatus(k, text){
+  document.getElementById('s-'+k).textContent = text;
+}
+
+function finishIngest(k, n, note){
+  const card=document.getElementById('p-'+k);
+  clearRunning(k);
+  card.classList.add('done');
+  const b=document.getElementById(MAIN_BTN[k].id);
+  if(b) b.textContent = n>0 ? ('✓ 已捞到 '+n+' 个') : '✓ 已完成';
+  const st=document.getElementById('s-'+k);
+  if(n>0) st.innerHTML='<b>'+n+' 个</b> 已进相册';
+  else st.textContent = note || '已完成';
+  toast(LABEL[k]+' 表情已进相册');
+  /* 真实后端有产物目录；演示模式用占位 */
+  addPlatformItems(k, n);
+}
+
+/* 演示模式：往相册塞占位贴纸（真实模式由后端产物清单填充） */
+function addPlatformItems(k, n){
+  const count = n>0 ? Math.min(n, 8) : 6;
+  for(let i=0;i<count;i++){
+    ITEMS.push({
+      id: ITEMS.length, emo: "😀", plat: LABEL[k], cat:"表情",
+      sel:false, grp:"未分册", real:true
+    });
+  }
+  render();
+}
+
+/* ---------- 后端事件回调 ---------- */
+window.addEventListener("bridgeEvent", (e)=>{
+  const d = e.detail || {};
+  const ch = d.channel, pay = d.payload || "";
+  if(ch === "weixinStage"){ setStatus("wx", pay); return; }
+  if(ch === "weixinDone"){ finishIngest("wx", 0, pay); return; }
+  if(ch === "weixinFailed"){ clearRunning("wx"); setStatus("wx", pay); resetBtn("wx", "导出微信表情"); return; }
+  if(ch === "collectDone"){ finishIngest("dy", 0, pay); return; }
+  if(ch === "collectFailed"){ clearRunning("dy"); setStatus("dy", pay); resetBtn("dy", "采集收藏表情"); return; }
+  if(ch === "douyinLogined"){ toast(pay); refreshDouyinUi('已登录'); return; }
+  if(ch === "douyinLoginAbandoned"){ toast(pay); refreshDouyinUi(); return; }
+});
+
+function resetBtn(k, label){
+  clearRunning(k);
+  const b=document.getElementById(MAIN_BTN[k].id);
+  if(!b) return;
+  b.disabled=false; b.textContent=label;
+}
+
+/* ================= 阶段 2：相册 ================= */
+function render(){
+  const g=document.getElementById('grid');
+  const list=ITEMS.filter(it=>{
+    if(fPlat!=='all' && it.plat!==fPlat) return false;
+    if(fCat!=='all' && it.cat!==fCat) return false;
+    if(q && !(it.emo.includes(q)||it.cat.includes(q)||it.plat.includes(q)||it.grp.includes(q))) return false;
+    return true;
+  });
+  if(!list.length){
+    g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="big">🫙</div>'
+      +'<h3>这一页是空的</h3><p>换个筛选条件，或者去第 1 步捞点回来。</p></div>';
+  } else {
+    g.innerHTML=list.map(it=>
+      '<div class="sticker'+(it.sel?' sel':'')+'" onclick="pick('+it.id+')">'
+      +'<span class="tag" style="--tc:'+PLAT_COLOR[it.plat]+'">'+it.plat+'</span>'
+      +'<span class="emo">'+it.emo+'</span>'
+      +'<span class="grp">'+it.grp+'</span>'
+      +'<span class="pick">✓</span></div>').join('');
+  }
+  document.getElementById('selN').textContent=ITEMS.filter(x=>x.sel).length;
+  syncExport();
+}
+function pick(id){
+  const it=ITEMS[id]; it.sel=!it.sel; render();
+}
+function selAll(){
+  const vis=ITEMS.filter(it=>(fPlat==='all'||it.plat===fPlat)&&(fCat==='all'||it.cat===fCat));
+  const all=vis.every(it=>it.sel);
+  vis.forEach(it=>it.sel=!all);
+  render();
+}
+function selNone(){ ITEMS.forEach(it=>it.sel=false); render(); }
+function newGroup(){
+  const name=prompt('新册页叫什么？（比如「我的猫猫」）');
+  if(!name) return;
+  const sel=ITEMS.filter(it=>it.sel);
+  if(!sel.length){ toast('先挑几个表情，再建册页'); return; }
+  sel.forEach(it=>it.grp=name);
+  render();
+  toast('已把 '+sel.length+' 个表情放进新册页「'+name+'」');
+}
+document.querySelectorAll('.books').forEach(box=>{
+  box.addEventListener('click', e=>{
+    const b=e.target.closest('.book'); if(!b) return;
+    box.querySelectorAll('.book').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(b.dataset.k==='plat') fPlat=b.dataset.v; else fCat=b.dataset.v;
+    render();
+  });
+});
+document.getElementById('q').addEventListener('input', e=>{ q=e.target.value.trim(); render(); });
+
+/* ================= 阶段 3：导出 ================= */
+function pickT(t){
+  target=t;
+  document.querySelectorAll('.tgt').forEach(x=>x.classList.toggle('on', x.dataset.t===t));
+  syncExport();
+}
+function syncExport(){
+  const n=ITEMS.filter(x=>x.sel).length;
+  document.getElementById('e-n').textContent=n;
+  document.getElementById('e-n2').textContent=n;
+  const btn=document.getElementById('doBtn');
+  btn.disabled = !(n>0 && target);
+  const h=document.getElementById('e-hint');
+  h.textContent = !target ? '先选一个目标端' : (n===0 ? '再去相册挑几个表情' : '可以出发了');
+}
+async function doExport(){
+  const n=ITEMS.filter(x=>x.sel).length;
+  if(!n || !target) return;
+  const p=document.getElementById('prog');
+  const fill=p.querySelector('i');
+  p.classList.add('on'); fill.style.width='0';
+
+  if(HAS_BRIDGE){
+    const base = await outDir();
+    const dir = base + "/export";
+    const msg = await window.bridge.export_memes(base, target);
+    if(msg.indexOf("导出完成") !== 0){
+      fill.style.width='0'; p.classList.remove('on');
+      document.getElementById('e-hint').textContent = msg;
+      toast(msg);
+      return;
+    }
+    document.getElementById('r-dir').textContent = dir;
+  }
+
+  let v=0;
+  const timer=setInterval(()=>{
+    v+=16; if(v>100)v=100; fill.style.width=v+'%';
+    if(v>=100){
+      clearInterval(timer);
+      setTimeout(()=>{ p.classList.remove('on'); fill.style.width='0'; }, 320);
+      document.getElementById('r-n').textContent=n;
+      document.getElementById('r-t').textContent=target;
+      document.getElementById('r-f').textContent=target==='抖音'?'GIF':'GIF / PNG';
+      document.getElementById('res').classList.add('show');
+      toast('导出完成：'+n+' 个表情 → '+target);
+    }
+  }, 150);
+}
+
+/* ================= 指引 ================= */
+const GUIDES={
+  '微信':[['打开微信的表情管理','点左下角「我」→「表情」→ 右上角齿轮，进表情管理。'],
+         ['添加表情','点「添加单张表情」，选中导出的 .gif 文件，可以一次多选。'],
+         ['在聊天里用','回聊天窗口打开表情面板就能看到。注意微信自己会压超大表情，可能把动图压成静态图。']],
+  'QQ':[['打开 QQ 聊天窗口','点开表情面板，再点左上角齿轮「设置」。'],
+        ['导入表情','选「导入导出」→「导入表情」，选中导出目录或里面的文件。'],
+        ['在收藏里看','导入完打开「我的收藏」就行。QQ 会自己生成缩略图，原图不动。']],
+  '抖音':[['打开抖音表情面板','点输入框旁笑脸图标，再点左上角「+」。'],
+          ['添加表情','在相册或文件列表里选中导出的表情，可以一次多选。'],
+          ['在聊天里用','回聊天窗口打开表情面板就能看到。']]
+};
+function guide(){
+  const g=GUIDES[target]||GUIDES['微信'];
+  document.getElementById('g-title').textContent='送到 '+target+' · 怎么导回去';
+  document.getElementById('g-url').textContent='emoji-migrator://guide/'+encodeURIComponent(target||'微信');
+  document.getElementById('g-body').innerHTML=g.map((s,i)=>
+    '<div class="gstep"><span class="gn">'+(i+1)+'</span><div><h4>'+s[0]+'</h4><p>'+s[1]+'</p></div></div>').join('');
+  document.getElementById('mask').classList.add('on');
+}
+function closeG(){ document.getElementById('mask').classList.remove('on'); }
+document.getElementById('mask').addEventListener('click', e=>{ if(e.target.id==='mask') closeG(); });
+
+/* 桥接晚于 DOM 就绪时，补刷依赖桥接的 UI（如抖音登录态）。 */
+async function refreshBridgeDependentUi(){
+  if(!HAS_BRIDGE){
+    /* 无桥接（浏览器里直接看原型）：把两个按钮也置成合理初态 */
+    refreshDouyinUi('未登录');
+    return;
+  }
+  try{
+    await refreshDouyinUi(await window.bridge.douyin_login_state());
+  }catch(e){ /* 桥接刚就绪时可能还在握手，忽略 */ }
+}
+
+/* ================= 打开导出目录 ================= */
+async function openOut(){
+  const base = await outDir();
+  const dir = base + "/export";
+  if(HAS_BRIDGE) window.bridge.open_dir(dir);
+  else toast('（演示）打开：'+dir);
+}
+
+/* ================= toast ================= */
+let tt;
+function toast(m){
+  const el=document.getElementById('toast');
+  el.textContent=m; el.classList.add('on');
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),2300);
+}
+
+render();
+refreshBridgeDependentUi();   /* 初始把抖音两个按钮的启用态摆对 */
+</script>
+</body>
+</html>

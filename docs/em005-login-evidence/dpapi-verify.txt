@@ -1,0 +1,27 @@
+[setup] APPDATA isolated at: C:\Users\<USER>\AppData\Local\Temp\em005-dpapi-verify-j9ynrvxp
+[setup] cache path: C:\Users\<USER>\AppData\Local\Temp\em005-dpapi-verify-j9ynrvxp\emoji-migrator\douyin_cookie.bin
+[1] save ok, ciphertext bytes = 446
+[1] load == saved: True
+[1] has_cached_session: True
+[1] plaintext leak in ciphertext: False
+[2] corrupted -> load result: None (expect None)
+[3] deleted -> load result: None (expect None)
+
+[manual] 换用户实测步骤（需第二 Windows 账户，人工执行；2026-10-20 按独立审核 MINOR-2 修正）
+  归因要点：必须让账户B 指向「账户A 的 Roaming 目录」。
+    若账户B 用自己的 %APPDATA%，文件根本不存在，load 返回 None 的原因是
+    「文件缺失」而非「DPAPI 解不开」—— 该步骤会**看似通过实则无效**
+    （换任何加密方案都给 None）。故下面命令同时打印 exists()：
+      期望 True None  = 文件确实在，但换用户解不开 → 命题成立
+      期望 False None = 步骤配错了，结论无效
+
+  1) 账户A 运行本脚本（或真实登录一次），确认文件生成：
+       %APPDATA%\emoji-migrator\douyin_cookie.bin
+     记下账户A 的 Roaming 目录绝对路径（下称 <A_ROAMING>）
+  2) 注销，登录账户B（普通标准用户即可）
+  3) 账户B 执行（把 <A_ROAMING> 换成步骤 1 记下的实际路径）：
+       python -c "import os,sys; os.environ['APPDATA']=r'<A_ROAMING>'; sys.path.insert(0,'D:/code/mymeme/src'); from emoji_migrator.douyin_auth import cookie_cache_path, load_cached_cookie; print(cookie_cache_path().exists(), load_cached_cookie())"
+  4) 期望输出：True None
+       —— 文件在（True）+ DPAPI 换用户解不开（None）= 命题成立
+     对照组：账户A 自己执行同一命令，应输出 True {'sessionid': '...'}（能解开）
+     两条对照才构成完整证据：同一文件，A 能解、B 不能解 = 绑定当前 Windows 用户。

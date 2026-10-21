@@ -1,0 +1,7 @@
+pid=26236 t=0
+MEI-DIR t=2 name=_MEI0000667c2 files=238
+CHILDREN t=5: 表情包互通工具.exe
+WINDOW t=5 child=表情包互通工具.exe title=表情包互通 · 导入向导
+killed=parent
+stderr_bytes=2
+RESULT=OK

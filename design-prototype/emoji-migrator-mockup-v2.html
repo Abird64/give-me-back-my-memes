@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>《把我的表情还回来！》· 设计原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   《把我的表情还回来！》 — Memphis / 波普拼贴风格设计原型
+   设计母题来自参考海报：紫粉渐变底 · 纯黑粗描边 · 硬边偏移阴影
+   复古浏览器窗口 · 半调网点 · 四角星芒 · 斜置拼贴
+   ============================================================ */
+
+/* ---------- 设计令牌 ---------- */
+:root{
+  /* 墨线与纸面：不用纯黑纯白 */
+  --ink:        #1B1B1F;
+  --paper:      #FFFCF5;
+  --paper-2:    #F4EDDD;
+
+  /* 主色板（海报原色） */
+  --violet:     #7C4DFF;
+  --violet-d:   #5B2FD6;
+  --magenta:    #FF3D8F;
+  --yellow:     #FFD23F;
+  --teal:       #15C4C4;
+  --orange:     #FF7A2E;
+  --lilac:      #C9B8FF;
+  --pink-soft:  #FFB3D9;
+
+  /* 平台身份色（波普饱和版） */
+  --wx:         #2FBF71;
+  --qq:         #1DA1F2;
+  --dy:         #FF2E4D;
+
+  /* 硬边阴影：全局统一，绝不模糊 */
+  --sh:      6px 6px 0 var(--ink);
+  --sh-sm:   4px 4px 0 var(--ink);
+  --sh-xs:   3px 3px 0 var(--ink);
+  --sh-lg:   11px 11px 0 var(--ink);
+  --bw:      3px;
+
+  --r: 14px;   /* 圆角克制使用：主结构用小圆角，贴纸用大圆角 */
+
+  --font-display: 'ZCOOL KuaiLe','Noto Sans SC',sans-serif;
+  --font-latin:   'Archivo Black','Noto Sans SC',sans-serif;
+  --font-body:    'Noto Sans SC','Microsoft YaHei',sans-serif;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  min-height:100%;
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--violet);
+  background-image:
+    radial-gradient(120% 90% at 8% 0%, #8E5BFF 0%, transparent 58%),
+    radial-gradient(110% 100% at 100% 100%, #FF3D8F 0%, transparent 62%),
+    linear-gradient(140deg,#6B3FE0 0%,#8E4BE8 38%,#E8479B 100%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+
+/* ---------- 背景拼贴层 ---------- */
+.deco{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.deco > *{ position:absolute; }
+
+/* 半调网点 */
+.dots{
+  inset:0;
+  background-image:radial-gradient(circle, rgba(27,27,31,.10) 1.4px, transparent 1.5px);
+  background-size:9px 9px;
+  mask-image:linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 22%, #000 70%, transparent 100%);
+  opacity:.75;
+}
+/* 左侧黄色不规则色块 */
+.blob-y{
+  left:-6vw; top:26vh; width:38vw; height:78vh;
+  background:var(--yellow);
+  border-radius: 62% 38% 47% 53% / 38% 55% 45% 62%;
+  opacity:.92;
+}
+/* 左下青色块 */
+.block-t{
+  left:8vw; bottom:-14vh; width:34vw; height:42vh;
+  background:var(--teal);
+  border-radius: 46% 54% 30% 70% / 55% 40% 60% 45%;
+  opacity:.9;
+}
+/* 右下粉色块 */
+.block-p{
+  right:-10vw; bottom:-18vh; width:44vw; height:52vh;
+  background:var(--magenta);
+  border-radius: 58% 42% 52% 48% / 40% 60% 40% 60%;
+  opacity:.55;
+}
+/* 斜置格纹条 */
+.stripes{
+  right:4vw; top:12vh; width:220px; height:34px;
+  background:repeating-linear-gradient(45deg, var(--ink) 0 10px, var(--orange) 10px 20px);
+  transform:rotate(-14deg);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+}
+/* 四角星芒 */
+.spark{ width:44px; height:44px; background:var(--yellow); }
+.spark.p{ background:var(--pink-soft); }
+.spark.t{ background:var(--teal); }
+.spark.o{ background:var(--orange); }
+.spark.s{
+  clip-path:polygon(50% 0%, 60% 38%, 96% 22%, 68% 50%, 100% 62%, 60% 62%, 58% 100%, 42% 62%, 8% 76%, 34% 50%, 0% 38%, 40% 38%);
+}
+.spark.outline{
+  background:none;
+  border:4px solid var(--ink);
+  clip-path:none;
+  border-radius:50%;
+  width:58px; height:58px;
+}
+.ring{
+  width:86px; height:86px; border:5px solid var(--ink); border-radius:50%;
+  background:transparent;
+}
+.ring.t{ border-color:var(--teal); border-width:6px; }
+.ring.y{ border-color:var(--yellow); border-width:6px; }
+/* 大箭头 */
+.arrow{
+  width:0; height:0;
+  border-left:52px solid transparent;
+  border-right:52px solid transparent;
+  border-bottom:78px solid var(--paper);
+  filter:drop-shadow(3px 4px 0 var(--ink));
+}
+
+/* ---------- 骨架 ---------- */
+.shell{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:34px 46px 90px; }
+
+/* ---------- 标题海报 ---------- */
+.masthead{ position:relative; margin-bottom:26px; }
+.poster{
+  display:block; width:fit-content; position:relative;
+  background:var(--yellow);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg);
+  padding:20px 30px 22px;
+  transform:rotate(-1.6deg);
+  max-width:100%;
+}
+.poster::after{  /* 胶带 */
+  content:""; position:absolute; top:-13px; left:46%;
+  width:104px; height:26px; background:rgba(255,255,255,.75);
+  border:2px solid var(--ink); transform:rotate(-4deg);
+}
+.hero{
+  font-family:var(--font-display);
+  font-size:clamp(34px, 6.4vw, 78px);
+  line-height:1.06;
+  letter-spacing:.02em;
+  margin:0;
+  color:var(--magenta);
+  -webkit-text-stroke:3.5px var(--ink);
+  paint-order:stroke fill;
+  text-shadow:7px 7px 0 var(--ink);
+}
+.hero .l2{ display:block; color:var(--violet-d); }
+.hero .l3{ display:block; color:var(--teal); }
+.sub-en{
+  font-family:var(--font-latin);
+  font-size:clamp(11px,1.5vw,16px);
+  letter-spacing:.24em;
+  margin:14px 0 0;
+  color:var(--ink);
+}
+.slogan{
+  font-size:14.5px; font-weight:500; color:var(--paper);
+  background:var(--ink);
+  display:block; width:fit-content; max-width:100%;
+  padding:6px 14px;
+  margin:18px 0 0;
+  transform:rotate(1deg);
+  box-shadow:4px 4px 0 var(--yellow);
+}
+.slogan b{ color:var(--yellow); }
+
+/* ---------- 阶段导航：复古浏览器标签 ---------- */
+.tabs{ display:flex; gap:10px; margin:30px 0 0; flex-wrap:wrap; align-items:flex-end; }
+.tab{
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  display:flex; align-items:center; gap:9px;
+  background:var(--paper); color:var(--ink);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:9px 18px;
+  cursor:pointer;
+  transform:translateY(4px);
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1), background .16s ease;
+}
+.tab .n{
+  font-family:var(--font-latin); font-size:11px;
+  background:var(--ink); color:var(--paper);
+  width:20px; height:20px; display:grid; place-items:center;
+}
+.tab:hover{ transform:translateY(-2px); }
+.tab.on{ background:var(--yellow); transform:translateY(0); box-shadow:var(--sh); }
+.tab.on .n{ background:var(--magenta); color:var(--paper); }
+
+/* ---------- 主窗口 ---------- */
+.win{
+  background:var(--paper);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg);
+  margin-top:16px;
+  animation:winIn .34s cubic-bezier(.22,1,.36,1);
+}
+@keyframes winIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+.win-bar{
+  display:flex; align-items:center; gap:12px;
+  background:var(--bar, var(--violet));
+  border-bottom:var(--bw) solid var(--ink);
+  padding:9px 14px;
+}
+.win-bar .dots{ display:flex; gap:7px; }
+.win-bar .dots i{ width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink); background:var(--paper); }
+.win-bar .dots i:nth-child(1){ background:var(--magenta); }
+.win-bar .dots i:nth-child(2){ background:var(--yellow); }
+.win-bar .dots i:nth-child(3){ background:var(--teal); }
+.win-bar .url{
+  font-family:var(--font-latin); font-size:11px; letter-spacing:.08em;
+  background:var(--paper); border:2.5px solid var(--ink);
+  padding:3px 12px; color:var(--ink);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.win-bar .title{
+  font-weight:900; font-size:14px; color:var(--ink);
+  margin-left:auto; white-space:nowrap;
+}
+.win-body{ padding:26px 28px 30px; }
+
+/* ---------- 阶段 1：导入三端 ---------- */
+.plat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.plat{
+  position:relative; background:var(--paper-2);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh);
+  padding:0 0 20px;
+  overflow:hidden;
+  transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s cubic-bezier(.22,1,.36,1);
+}
+.plat:hover{ transform:translate(-2px,-3px); box-shadow:var(--sh-lg); }
+.plat .cap{
+  background:var(--pc); color:var(--ink);
+  border-bottom:var(--bw) solid var(--ink);
+  padding:8px 14px;
+  font-weight:900; font-size:13px;
+  display:flex; align-items:center; gap:8px;
+}
+.plat .cap .dot{ width:11px; height:11px; border-radius:50%; background:var(--ink); border:2px solid var(--ink); }
+.plat .glyph{
+  height:118px; display:grid; place-items:center;
+  font-size:60px; line-height:1;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,.55) 0 12px, transparent 13px),
+    var(--pc);
+  border-bottom:var(--bw) solid var(--ink);
+}
+.plat .desc{ font-size:13px; line-height:1.65; color:#3A3A46; padding:14px 16px 0; min-height:74px; }
+.plat .btn{
+  margin:14px 16px 0; width:calc(100% - 32px);
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  background:var(--yellow); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh-sm);
+  padding:12px 10px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.plat .btn:hover:not(:disabled){ background:var(--orange); color:var(--paper); }
+.plat .btn:active:not(:disabled){ transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+.plat .btn:disabled{ background:var(--paper-2); color:#8A8A96; cursor:default; box-shadow:var(--sh-xs); }
+.plat .stat{
+  font-size:12px; font-weight:700; color:#4A4A58;
+  padding:12px 16px 0; display:flex; align-items:center; gap:7px;
+}
+.plat .stat .pip{ width:9px; height:9px; border-radius:50%; background:#C0C0CC; border:2px solid var(--ink); }
+.plat.done .stat .pip{ background:var(--wx); }
+.plat.done .stat b{ color:var(--wx); }
+
+.tip{
+  margin-top:22px; display:flex; align-items:flex-start; gap:12px;
+  background:var(--lilac); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:13px 17px; font-size:13.5px; line-height:1.6;
+}
+.tip .ico{
+  flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center;
+  background:var(--yellow); border:2.5px solid var(--ink); font-size:15px;
+}
+
+/* ---------- 阶段 2：相册（贴纸册） ---------- */
+.bar-top{
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  padding-bottom:16px; margin-bottom:18px;
+  border-bottom:var(--bw) dashed rgba(27,27,31,.35);
+}
+.search{
+  display:flex; align-items:center; gap:9px; flex:1 1 230px; min-width:0;
+  background:var(--paper-2); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-xs); padding:9px 13px;
+}
+.search input{
+  flex:1; min-width:0; border:0; outline:0; background:transparent;
+  font-family:var(--font-body); font-size:14px; font-weight:700; color:var(--ink);
+}
+.search .mag{ font-size:15px; }
+.btn-ghost{
+  font-family:var(--font-body); font-weight:900; font-size:13px;
+  background:var(--paper); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh-xs);
+  padding:9px 15px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn-ghost:hover{ background:var(--lilac); }
+.btn-ghost:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+
+/* 册页标签 */
+.lbl{
+  font-family:var(--font-latin); font-size:10px; letter-spacing:.18em;
+  color:#5A5A68; margin:0 0 8px;
+}
+.books{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+.book{
+  font-weight:900; font-size:12.5px;
+  border:2.5px solid var(--ink); background:var(--paper);
+  padding:6px 13px; cursor:pointer; box-shadow:var(--sh-xs);
+  display:inline-flex; align-items:center; gap:7px;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.book .sq{ width:9px; height:9px; border:2px solid var(--ink); }
+.book:hover{ transform:translateY(-2px); }
+.book.on{ background:var(--ink); color:var(--paper); }
+.book.on .sq{ background:var(--yellow); border-color:var(--yellow); }
+.book.new{ border-style:dashed; background:var(--paper-2); }
+
+.count-line{ margin-left:auto; font-size:13px; font-weight:700; color:#4A4A58; white-space:nowrap; }
+.count-line b{ font-family:var(--font-latin); font-size:19px; color:var(--magenta); margin:0 3px; }
+
+/* 贴纸册 */
+.sheet{
+  background:var(--paper-2);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh);
+  padding:26px 24px 28px;
+  position:relative;
+}
+.sheet::before{  /* 装订孔 */
+  content:""; position:absolute; left:11px; top:0; bottom:0;
+  border-right:3px dashed rgba(27,27,31,.28);
+}
+.sheet::after{
+  content:""; position:absolute; left:5px; top:26px;
+  width:11px; height:11px; border-radius:50%;
+  background:var(--paper); border:2.5px solid var(--ink);
+  box-shadow:0 40px 0 -1px var(--paper), 0 40px 0 1.5px var(--ink),
+             0 80px 0 -1px var(--paper), 0 80px 0 1.5px var(--ink),
+             0 120px 0 -1px var(--paper), 0 120px 0 1.5px var(--ink);
+}
+.grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(112px,1fr)); gap:22px; padding-left:16px; }
+.sticker{
+  position:relative; aspect-ratio:1; cursor:pointer;
+  background:var(--paper);
+  border:var(--bw) solid var(--ink);
+  border-radius:var(--r);
+  box-shadow:var(--sh-sm);
+  display:grid; place-items:center;
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1);
+}
+.sticker:nth-child(3n){ transform:rotate(-3.2deg); }
+.sticker:nth-child(3n+1){ transform:rotate(2.4deg); }
+.sticker:nth-child(4n){ transform:rotate(-1.4deg); }
+.sticker:hover{ transform:rotate(0deg) translateY(-4px) scale(1.03); box-shadow:var(--sh); z-index:2; }
+.sticker .emo{ font-size:48px; line-height:1; }
+.sticker .tag{
+  position:absolute; left:-2px; top:-2px;
+  font-size:10px; font-weight:900; color:var(--ink);
+  background:var(--tc); border:2.5px solid var(--ink);
+  border-radius:var(--r) 0 var(--r) 0;
+  padding:2px 8px 3px;
+}
+.sticker .grp{
+  position:absolute; right:-2px; bottom:-2px;
+  font-size:10px; font-weight:700; color:var(--paper);
+  background:var(--ink);
+  padding:2px 7px 3px;
+  border-radius:var(--r) 0 var(--r) 0;
+}
+.sticker .pick{
+  position:absolute; right:-9px; top:-9px;
+  width:26px; height:26px; border-radius:50%;
+  background:var(--magenta); border:2.5px solid var(--ink);
+  display:none; place-items:center; color:var(--paper);
+  font-size:13px; font-weight:900;
+}
+.sticker.sel{ border-color:var(--ink); box-shadow:var(--sh); transform:rotate(0deg) scale(1.04); }
+.sticker.sel .pick{ display:grid; }
+.sticker.sel::after{
+  content:""; position:absolute; inset:-3px; border:3px solid var(--magenta);
+  border-radius:var(--r); pointer-events:none;
+}
+.empty{ text-align:center; padding:52px 20px; }
+.empty .big{ font-size:54px; }
+.empty h3{ font-family:var(--font-display); font-size:22px; margin:12px 0 6px; color:var(--violet-d); -webkit-text-stroke:1.5px var(--ink); paint-order:stroke fill; }
+.empty p{ margin:0; color:#5A5A68; font-size:13.5px; }
+
+/* 底部选区托盘 */
+.tray{
+  position:sticky; bottom:0; margin-top:22px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  background:var(--ink); color:var(--paper);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm);
+  padding:12px 18px;
+}
+.tray .n{ font-family:var(--font-latin); font-size:26px; color:var(--yellow); }
+.tray .txt{ font-size:13.5px; font-weight:700; }
+.tray .sp{ flex:1; }
+.tray .go{
+  font-family:var(--font-body); font-weight:900; font-size:14px;
+  background:var(--yellow); color:var(--ink);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-xs);
+  padding:11px 22px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.tray .go:hover{ background:var(--orange); color:var(--paper); }
+.tray .go:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+
+/* ---------- 阶段 3：导出 ---------- */
+.ticket{
+  background:var(--paper-2); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh); padding:20px 24px;
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  position:relative;
+  margin-bottom:24px;
+}
+.ticket::before,.ticket::after{
+  content:""; position:absolute; left:0; right:0; height:9px;
+  background:repeating-linear-gradient(90deg, var(--ink) 0 9px, transparent 9px 18px);
+}
+.ticket::before{ top:-5px; }
+.ticket::after{ bottom:-5px; }
+.ticket .big{ font-family:var(--font-latin); font-size:56px; line-height:1; color:var(--magenta); }
+.ticket .meta{ font-size:13.5px; line-height:1.7; }
+.ticket .meta b{ font-weight:900; }
+
+.tgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:24px; }
+.tgt{
+  position:relative; text-align:left;
+  background:var(--paper); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-sm); padding:0 0 18px; cursor:pointer;
+  overflow:hidden;
+  transition:transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s cubic-bezier(.22,1,.36,1);
+}
+.tgt:hover{ transform:translate(-2px,-3px); box-shadow:var(--sh); }
+.tgt .cap{
+  background:var(--pc); border-bottom:var(--bw) solid var(--ink);
+  padding:8px 14px; font-weight:900; font-size:13px;
+}
+.tgt .ico{
+  height:92px; display:grid; place-items:center; font-size:42px;
+  background:var(--paper-2); border-bottom:var(--bw) solid var(--ink);
+}
+.tgt .rules{ padding:13px 16px 0; font-size:12.5px; line-height:1.7; color:#4A4A58; }
+.tgt .rules b{ color:var(--ink); }
+.tgt .radio{
+  position:absolute; right:12px; top:12px; width:24px; height:24px; border-radius:50%;
+  border:3px solid var(--ink); background:var(--paper);
+  display:grid; place-items:center; font-size:13px; color:transparent;
+}
+.tgt.on{ box-shadow:var(--sh); transform:translate(-2px,-3px); }
+.tgt.on .radio{ background:var(--magenta); color:var(--paper); }
+.tgt.on .ico{ background:var(--pc); }
+
+.actions{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.go{
+  font-family:var(--font-body); font-weight:900; font-size:16px;
+  background:var(--yellow); color:var(--ink);
+  border:var(--bw) solid var(--ink); box-shadow:var(--sh);
+  padding:15px 34px; cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.go:hover:not(:disabled){ background:var(--orange); color:var(--paper); }
+.go:active:not(:disabled){ transform:translate(4px,4px); box-shadow:2px 2px 0 var(--ink); }
+.go:disabled{ background:#D8D4C8; color:#8A8A96; cursor:default; box-shadow:var(--sh-xs); }
+.hint{ font-size:13px; font-weight:700; color:#5A5A68; }
+
+.prog{ height:26px; border:var(--bw) solid var(--ink); background:var(--paper-2); box-shadow:var(--sh-xs); display:none; margin-bottom:22px; overflow:hidden; }
+.prog.on{ display:block; }
+.prog i{ display:block; height:100%; width:0;
+  background:repeating-linear-gradient(45deg, var(--magenta) 0 12px, var(--violet) 12px 24px);
+  transition:width .28s cubic-bezier(.22,1,.36,1); }
+.prog b{ position:absolute; }
+
+.result{ display:none; }
+.result.show{ display:block; animation:winIn .3s cubic-bezier(.22,1,.36,1); }
+.rcard{
+  background:#E9FBF0; border:var(--bw) solid var(--ink); box-shadow:var(--sh);
+  padding:20px 22px;
+}
+.rcard h3{ font-family:var(--font-display); font-size:21px; margin:0 0 12px; color:#0E7A46; -webkit-text-stroke:1.5px var(--ink); paint-order:stroke fill; }
+.rcard .row{ font-size:13.5px; line-height:1.85; }
+.rcard .row span{ color:#3A5A48; }
+.rcard code{ font-family:var(--font-latin); font-size:12px; background:var(--paper); border:2px solid var(--ink); padding:2px 8px; }
+.rbtns{ display:flex; gap:12px; margin-top:16px; flex-wrap:wrap; }
+
+/* ---------- 指引弹窗 ---------- */
+.mask{
+  position:fixed; inset:0; z-index:60; display:none;
+  background:rgba(27,27,31,.62);
+  align-items:center; justify-content:center; padding:24px;
+}
+.mask.on{ display:flex; animation:fade .18s ease; }
+@keyframes fade{ from{opacity:0} to{opacity:1} }
+.modal{
+  background:var(--paper); border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh-lg); width:600px; max-width:100%;
+  max-height:88vh; display:flex; flex-direction:column;
+  animation:pop .26s cubic-bezier(.22,1,.36,1);
+}
+@keyframes pop{ from{ transform:translateY(16px) scale(.97); opacity:0 } to{ transform:none; opacity:1 } }
+.gstep{ padding:20px 24px; display:flex; gap:15px; border-bottom:2.5px dashed rgba(27,27,31,.25); }
+.gstep:last-child{ border-bottom:0; }
+.gstep .gn{
+  flex:0 0 38px; height:38px; display:grid; place-items:center;
+  font-family:var(--font-latin); font-size:17px;
+  background:var(--yellow); border:2.5px solid var(--ink);
+  border-radius:50%; box-shadow:var(--sh-xs);
+}
+.gstep h4{ margin:0 0 5px; font-size:15px; font-weight:900; }
+.gstep p{ margin:0; font-size:13px; line-height:1.7; color:#3A3A46; }
+.modal .foot{ padding:14px 24px; border-top:var(--bw) solid var(--ink); background:var(--paper-2); display:flex; gap:12px; }
+.modal .foot .btn-ghost{ flex:1; padding:12px; font-size:14px; }
+
+/* ---------- 设计说明便签 ---------- */
+.note{
+  margin-top:34px;
+  background:var(--yellow);
+  border:var(--bw) solid var(--ink);
+  box-shadow:var(--sh);
+  transform:rotate(-.7deg);
+}
+.note summary{
+  cursor:pointer; list-style:none; padding:15px 20px;
+  font-family:var(--font-display); font-size:17px; color:var(--ink);
+  display:flex; align-items:center; gap:10px;
+}
+.note summary::-webkit-details-marker{ display:none; }
+.note summary .tag2{
+  font-family:var(--font-body); font-size:11px; font-weight:900;
+  background:var(--ink); color:var(--yellow); padding:3px 9px; border-radius:20px;
+}
+.note .in{ padding:2px 22px 22px; font-size:13px; line-height:1.85; }
+.note .in h4{ font-family:var(--font-display); font-size:15px; margin:16px 0 6px; color:var(--violet-d); }
+.note .in ul{ margin:6px 0; padding-left:20px; }
+.note .in code{ font-family:var(--font-latin); font-size:11.5px; background:var(--paper); border:2px solid var(--ink); padding:1px 6px; }
+.note .in .warn{ background:var(--paper); border:2.5px solid var(--ink); box-shadow:var(--sh-xs); padding:11px 14px; margin-top:14px; }
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed; left:50%; bottom:30px; z-index:80;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--paper);
+  border:2.5px solid var(--ink); box-shadow:var(--sh-sm);
+  padding:12px 22px; font-size:13.5px; font-weight:700;
+  opacity:0; pointer-events:none;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
+}
+.toast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ---------- 响应式 ---------- */
+@media (max-width:900px){
+  .plat-grid,.tgrid{ grid-template-columns:1fr; }
+  .tabs{ gap:7px; }
+  .tab{ padding:8px 12px; font-size:13px; }
+  .win-body{ padding:20px 18px 24px; }
+  .grid{ grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:18px; }
+  .hero{ -webkit-text-stroke-width:2.5px; text-shadow:5px 5px 0 var(--ink); }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 背景拼贴 ============ -->
+<div class="deco" aria-hidden="true">
+  <div class="dots"></div>
+  <div class="blob-y"></div>
+  <div class="block-t"></div>
+  <div class="block-p"></div>
+  <div class="stripes"></div>
+  <div class="spark s" style="left:7%;top:12%"></div>
+  <div class="spark s p" style="right:12%;top:9%;width:60px;height:60px"></div>
+  <div class="spark s t" style="right:6%;top:44%;width:36px;height:36px"></div>
+  <div class="spark s o" style="left:4%;bottom:16%"></div>
+  <div class="spark s" style="left:52%;bottom:6%;width:30px;height:30px"></div>
+  <div class="ring y" style="right:16%;bottom:12%"></div>
+  <div class="ring t" style="left:3%;top:52%"></div>
+  <div class="arrow" style="right:8%;bottom:30%;transform:rotate(-14deg)"></div>
+</div>
+
+<div class="shell">
+
+  <!-- ============ 标题海报 ============ -->
+  <header class="masthead">
+    <div class="poster">
+      <h1 class="hero">
+        <span class="l1">把我的表情</span>
+        <span class="l2">还给我！</span>
+      </h1>
+      <p class="sub-en">GIVE ME BACK MY EMOJIS</p>
+    </div>
+    <p class="slogan">
+      微信 · QQ · 抖音 的表情包，<b>捞出来、归一化、随便挑</b>，再原样送回任何一个聊天窗。
+    </p>
+  </header>
+
+  <!-- ============ 阶段导航 ============ -->
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-v="ingest"><span class="n">1</span>捞表情</button>
+    <button class="tab" data-v="album"><span class="n">2</span>我的相册</button>
+    <button class="tab" data-v="export"><span class="n">3</span>送回去</button>
+  </nav>
+
+  <!-- ============ 阶段 1：捞表情 ============ -->
+  <section class="win" id="v-ingest">
+    <div class="win-bar" style="--bar:var(--yellow)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://collect</span>
+      <span class="title">第 1 步 · 捞表情</span>
+    </div>
+    <div class="win-body">
+      <div class="plat-grid">
+        <div class="plat" id="p-wx" style="--pc:var(--wx)">
+          <div class="cap"><span class="dot"></span>微信</div>
+          <div class="glyph">💬</div>
+          <p class="desc">读取本机微信收到的表情（含好友发来的收藏）。需微信在运行，约 1~5 分钟，只读不改动。</p>
+          <button class="btn" onclick="ingest('wx')">导出微信表情</button>
+          <div class="stat"><span class="pip"></span><span id="s-wx">还没捞</span></div>
+        </div>
+        <div class="plat" id="p-qq" style="--pc:var(--qq)">
+          <div class="cap"><span class="dot"></span>QQ</div>
+          <div class="glyph">🐧</div>
+          <p class="desc">扫描本机 QQ 收藏表情目录（只读探测，秒级完成）。也可以直接把文件夹拖进相册。</p>
+          <button class="btn" onclick="ingest('qq')">扫描 QQ 表情目录</button>
+          <div class="stat"><span class="pip"></span><span id="s-qq">还没捞</span></div>
+        </div>
+        <div class="plat" id="p-dy" style="--pc:var(--dy)">
+          <div class="cap"><span class="dot"></span>抖音</div>
+          <div class="glyph">🎵</div>
+          <p class="desc">扫码登录后采集抖音收藏的表情，WebP 自动转成 GIF，跨页去重。</p>
+          <button class="btn" onclick="ingest('dy')">登录并采集收藏</button>
+          <div class="stat"><span class="pip"></span><span id="s-dy">还没捞</span></div>
+        </div>
+      </div>
+      <div class="tip">
+        <span class="ico">💡</span>
+        <span>捞不是唯一的入口——<b>文件夹、散图、以前的导出目录</b>，随时都能直接拖进「我的相册」。捞不动的东西，硬搬就行。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 阶段 2：我的相册 ============ -->
+  <section class="win" id="v-album" style="display:none">
+    <div class="win-bar" style="--bar:var(--teal)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://album</span>
+      <span class="title">第 2 步 · 我的相册</span>
+    </div>
+    <div class="win-body">
+      <div class="bar-top">
+        <label class="search">
+          <span class="mag">🔍</span>
+          <input id="q" placeholder="搜表情、分类、平台…" oninput="render()" />
+        </label>
+        <button class="btn-ghost" onclick="selAll()">全选</button>
+        <button class="btn-ghost" onclick="selNone()">清空</button>
+        <button class="btn-ghost" onclick="newGroup()">＋ 新建册页</button>
+      </div>
+
+      <p class="lbl">按平台</p>
+      <div class="books" id="f-plat">
+        <span class="book on" data-k="plat" data-v="all"><span class="sq" style="background:var(--violet)"></span>全部</span>
+        <span class="book" data-k="plat" data-v="微信"><span class="sq" style="background:var(--wx)"></span>微信</span>
+        <span class="book" data-k="plat" data-v="QQ"><span class="sq" style="background:var(--qq)"></span>QQ</span>
+        <span class="book" data-k="plat" data-v="抖音"><span class="sq" style="background:var(--dy)"></span>抖音</span>
+      </div>
+
+      <p class="lbl">按册页（分类）</p>
+      <div class="books" id="f-cat">
+        <span class="book on" data-k="cat" data-v="all"><span class="sq" style="background:var(--yellow)"></span>全部</span>
+        <span class="book" data-k="cat" data-v="表情"><span class="sq" style="background:var(--magenta)"></span>表情</span>
+        <span class="book" data-k="cat" data-v="宠物"><span class="sq" style="background:var(--orange)"></span>宠物</span>
+        <span class="book" data-k="cat" data-v="文字"><span class="sq" style="background:var(--lilac)"></span>文字</span>
+        <span class="book" data-k="cat" data-v="节日"><span class="sq" style="background:var(--teal)"></span>节日</span>
+        <span class="book" data-k="cat" data-v="搞笑"><span class="sq" style="background:var(--ink)"></span>搞笑</span>
+      </div>
+
+      <div class="sheet">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="tray">
+        <span class="n" id="selN">0</span>
+        <span class="txt">个已选中 · 挑完就能送回去</span>
+        <span class="sp"></span>
+        <button class="go" onclick="go(2)">下一步：送去任意端 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 阶段 3：送回去 ============ -->
+  <section class="win" id="v-export" style="display:none">
+    <div class="win-bar" style="--bar:var(--magenta)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url">emoji-migrator://export</span>
+      <span class="title">第 3 步 · 送回去</span>
+    </div>
+    <div class="win-body">
+      <div class="ticket">
+        <span class="big" id="e-n">0</span>
+        <div class="meta">
+          选中 <b id="e-n2">0</b> 个表情准备出发<br />
+          导出的是<b>修正后的副本</b>，你原来的文件一个字节都不动
+        </div>
+      </div>
+
+      <div class="tgrid" id="tgrid">
+        <div class="tgt" data-t="微信" style="--pc:var(--wx)" onclick="pickT('微信')">
+          <div class="cap">微信</div>
+          <div class="ico">💬</div>
+          <div class="rules"><b>GIF / PNG</b><br />自动修正后缀与尺寸<br />动图保留帧与循环</div>
+          <span class="radio">✓</span>
+        </div>
+        <div class="tgt" data-t="QQ" style="--pc:var(--qq)" onclick="pickT('QQ')">
+          <div class="cap">QQ</div>
+          <div class="ico">🐧</div>
+          <div class="rules"><b>GIF / PNG</b><br />感知哈希去重<br />缩略图由 QQ 自己生成</div>
+          <span class="radio">✓</span>
+        </div>
+        <div class="tgt" data-t="抖音" style="--pc:var(--dy)" onclick="pickT('抖音')">
+          <div class="cap">抖音</div>
+          <div class="ico">🎵</div>
+          <div class="rules"><b>GIF</b><br />WebP 自动转码<br />白底合成防黑边</div>
+          <span class="radio">✓</span>
+        </div>
+      </div>
+
+      <div class="prog" id="prog"><i></i></div>
+
+      <div class="actions">
+        <button class="go" id="doBtn" onclick="doExport()" disabled>开始导出</button>
+        <span class="hint" id="e-hint">先在相册里挑表情，再选一个目标端</span>
+      </div>
+
+      <div class="result" id="res">
+        <div class="rcard">
+          <h3>✅ 导出完成，表情物归原主</h3>
+          <div class="row"><span>导出目录：</span><code>~/emoji-migrator-out/20261021-120735</code></div>
+          <div class="row"><span>已导出：</span><b id="r-n">0</b> 个文件（去重后）</div>
+          <div class="row"><span>目标端：</span><b id="r-t">—</b> · <span>格式：</span><b id="r-f">—</b></div>
+          <div class="rbtns">
+            <button class="btn-ghost" onclick="toast('（原型）打开导出目录')">打开导出目录</button>
+            <button class="btn-ghost" onclick="guide()">看导入指引</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 设计说明 ============ -->
+  <details class="note">
+    <summary>📐 设计说明 / 这版改了什么 <span class="tag2">点开</span></summary>
+    <div class="in">
+      <h4>1. 名字</h4>
+      <p>产品名从「表情包互通」改成 <b>《把我的表情还回来！》</b>——从工具名变成一句情绪。
+      副标 GIVE ME BACK MY EMOJIS 保留了英文海报感。</p>
+
+      <h4>2. 视觉母题直接取自参考海报</h4>
+      <ul>
+        <li><b>复古浏览器窗口</b> → 三个阶段 = 三个窗口，顶栏三色圆点 + 地址栏，导航也是窗口标签。</li>
+        <li><b>贴纸册</b> → 相册页做成一页活页贴纸册：装订孔、虚线、微微歪斜的模切贴纸。</li>
+        <li><b>海报标题块</b> → 倾斜色块 + 3.5px 描边 + 硬阴影，像贴在墙上的海报。</li>
+        <li><b>硬边阴影</b> → 全局 3px 墨线 + 纯色偏移阴影，零模糊、零圆角糖水。</li>
+        <li><b>半调网点 / 星芒 / 格纹 / 太阳射线</b> → 只铺在边角留白，绝不压正文。</li>
+      </ul>
+
+      <h4>3. 逻辑修正（相对旧向导）</h4>
+      <ul>
+        <li>旧的第 2 步「选平台」里塞着微信导出、抖音采集——<b>采集是来源，不是目标</b>。现在采集全在第 1 步，选平台只在第 3 步出现。</li>
+        <li><b>质量档位假控件已删</b>（旧版「仅作记录、不压缩」，EM-010 已下线档位常量）。导出信息改为真实数字：文件数、去重数、目标端格式。</li>
+        <li>相册是主角：新增<b>册页（分类）</b>维度，可自建册页并把选中贴纸归进去。</li>
+      </ul>
+
+      <h4>4. 落地形态：这一版基本排除了 QSS 方案</h4>
+      <div class="warn">
+        本风格依赖<b>硬阴影、文字描边、半调网点、自定义展示字体、斜置拼贴</b>——这些在 Qt QSS 里几乎无法实现。
+        建议落地为 <code>PySide6 壳 + QtWebEngine 承载本 HTML</code>，而不是纯 QSS 重做。
+        需鹏子拍板。
+      </div>
+
+      <h4>5. 工程约束不变</h4>
+      <ul>
+        <li>本文件是规划原型，<b>不改 <code>gui.py</code> / <code>src</code></b>。</li>
+        <li>落地时业务算法仍复用 <code>cli._normalize_dir</code>、<code>wxcollect</code>、<code>collect_flow</code>、<code>qqdir</code>，不重写。</li>
+        <li>合规红线（9 个禁用 API 零出现）不变。</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<!-- ============ 指引弹窗 ============ -->
+<div class="mask" id="mask">
+  <div class="modal">
+    <div class="win-bar" style="--bar:var(--yellow)">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="url" id="g-url">emoji-migrator://guide</span>
+      <span class="title" id="g-title">导入指引</span>
+    </div>
+    <div id="g-body" style="overflow:auto"></div>
+    <div class="foot"><button class="btn-ghost" onclick="closeG()">知道了</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+const EMO = [
+  ['😀','微信','表情'],['🐱','QQ','宠物'],['🎉','抖音','节日'],['😂','微信','搞笑'],
+  ['🐶','QQ','宠物'],['❤️','抖音','表情'],['🔥','微信','搞笑'],['🍕','QQ','表情'],
+  ['🌟','抖音','节日'],['😎','微信','表情'],['🐰','QQ','宠物'],['🎁','抖音','节日'],
+  ['💡','微信','文字'],['✨','QQ','表情'],['😭','抖音','搞笑'],['🐻','微信','宠物'],
+  ['🍔','QQ','表情'],['⚡','抖音','搞笑'],['🤔','微信','表情'],['🌈','QQ','节日'],
+  ['💯','抖音','文字'],['🐼','微信','宠物'],['😍','QQ','表情'],['🎈','抖音','节日'],
+  ['🕶️','微信','搞笑'],['🍜','QQ','表情'],['🎂','抖音','节日'],['👑','微信','文字'],
+];
+const PLAT_COLOR = { '微信':'var(--wx)', 'QQ':'var(--qq)', '抖音':'var(--dy)' };
+const ITEMS = EMO.map((e,i)=>({ id:i, emo:e[0], plat:e[1], cat:e[2], sel:false, grp:'未分册' }));
+
+let fPlat='all', fCat='all', q='', target=null, view='ingest';
+
+/* ================= 阶段切换 ================= */
+document.getElementById('tabs').addEventListener('click', e=>{
+  const b=e.target.closest('.tab'); if(!b) return;
+  go(b.dataset.v==='ingest'?'ingest':b.dataset.v==='album'?'album':'export');
+});
+function go(v){
+  view=v;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.v===v));
+  ['ingest','album','export'].forEach(k=>{
+    document.getElementById('v-'+k).style.display = k===v ? '' : 'none';
+  });
+  window.scrollTo({ top:0, behavior:'smooth' });
+  if(v==='export') syncExport();
+}
+
+/* ================= 阶段 1：捞 ================= */
+const N = { wx:412, qq:96, dy:38 };
+const LABEL = { wx:'微信', qq:'QQ', dy:'抖音' };
+function ingest(k){
+  const card=document.getElementById('p-'+k);
+  const btn=card.querySelector('.btn');
+  btn.disabled=true; btn.textContent='正在捞…';
+  setTimeout(()=>{
+    card.classList.add('done');
+    btn.textContent='✓ 已捞到 '+N[k]+' 个';
+    document.getElementById('s-'+k).innerHTML='<b>'+N[k]+' 个</b> 已进相册';
+    toast(LABEL[k]+' 的 '+N[k]+' 个表情已进相册');
+  }, 950);
+}
+
+/* ================= 阶段 2：相册 ================= */
+function render(){
+  const g=document.getElementById('grid');
+  const list=ITEMS.filter(it=>{
+    if(fPlat!=='all' && it.plat!==fPlat) return false;
+    if(fCat!=='all' && it.cat!==fCat) return false;
+    if(q && !(it.emo.includes(q)||it.cat.includes(q)||it.plat.includes(q)||it.grp.includes(q))) return false;
+    return true;
+  });
+  if(!list.length){
+    g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="big">🫙</div>'
+      +'<h3>这一页是空的</h3><p>换个筛选条件，或者去第 1 步捞点回来。</p></div>';
+  } else {
+    g.innerHTML=list.map(it=>
+      '<div class="sticker'+(it.sel?' sel':'')+'" onclick="pick('+it.id+')">'
+      +'<span class="tag" style="--tc:'+PLAT_COLOR[it.plat]+'">'+it.plat+'</span>'
+      +'<span class="emo">'+it.emo+'</span>'
+      +'<span class="grp">'+it.grp+'</span>'
+      +'<span class="pick">✓</span></div>').join('');
+  }
+  document.getElementById('selN').textContent=ITEMS.filter(x=>x.sel).length;
+  syncExport();
+}
+function pick(id){
+  const it=ITEMS[id]; it.sel=!it.sel; render();
+}
+function selAll(){
+  const vis=ITEMS.filter(it=>(fPlat==='all'||it.plat===fPlat)&&(fCat==='all'||it.cat===fCat));
+  const all=vis.every(it=>it.sel);
+  vis.forEach(it=>it.sel=!all);
+  render();
+}
+function selNone(){ ITEMS.forEach(it=>it.sel=false); render(); }
+function newGroup(){
+  const name=prompt('新册页叫什么？（比如「我的猫猫」）');
+  if(!name) return;
+  const sel=ITEMS.filter(it=>it.sel);
+  if(!sel.length){ toast('先挑几个表情，再建册页'); return; }
+  sel.forEach(it=>it.grp=name);
+  render();
+  toast('已把 '+sel.length+' 个表情放进新册页「'+name+'」');
+}
+document.querySelectorAll('.books').forEach(box=>{
+  box.addEventListener('click', e=>{
+    const b=e.target.closest('.book'); if(!b) return;
+    box.querySelectorAll('.book').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(b.dataset.k==='plat') fPlat=b.dataset.v; else fCat=b.dataset.v;
+    render();
+  });
+});
+document.getElementById('q').addEventListener('input', e=>{ q=e.target.value.trim(); render(); });
+
+/* ================= 阶段 3：导出 ================= */
+function pickT(t){
+  target=t;
+  document.querySelectorAll('.tgt').forEach(x=>x.classList.toggle('on', x.dataset.t===t));
+  syncExport();
+}
+function syncExport(){
+  const n=ITEMS.filter(x=>x.sel).length;
+  document.getElementById('e-n').textContent=n;
+  document.getElementById('e-n2').textContent=n;
+  const btn=document.getElementById('doBtn');
+  btn.disabled = !(n>0 && target);
+  const h=document.getElementById('e-hint');
+  h.textContent = !target ? '先选一个目标端' : (n===0 ? '再去相册挑几个表情' : '可以出发了');
+}
+function doExport(){
+  const n=ITEMS.filter(x=>x.sel).length;
+  if(!n || !target) return;
+  const p=document.getElementById('prog');
+  const fill=p.querySelector('i');
+  p.classList.add('on'); fill.style.width='0';
+  let v=0;
+  const timer=setInterval(()=>{
+    v+=16; if(v>100)v=100; fill.style.width=v+'%';
+    if(v>=100){
+      clearInterval(timer);
+      setTimeout(()=>{ p.classList.remove('on'); fill.style.width='0'; }, 320);
+      document.getElementById('r-n').textContent=n;
+      document.getElementById('r-t').textContent=target;
+      document.getElementById('r-f').textContent=target==='抖音'?'GIF':'GIF / PNG';
+      document.getElementById('res').classList.add('show');
+      toast('导出完成：'+n+' 个表情 → '+target);
+    }
+  }, 150);
+}
+
+/* ================= 指引 ================= */
+const GUIDES={
+  '微信':[['打开微信的表情管理','点左下角「我」→「表情」→ 右上角齿轮，进表情管理。'],
+         ['添加表情','点「添加单张表情」，选中导出的 .gif 文件，可以一次多选。'],
+         ['在聊天里用','回聊天窗口打开表情面板就能看到。注意微信自己会压超大表情，可能把动图压成静态图。']],
+  'QQ':[['打开 QQ 聊天窗口','点开表情面板，再点左上角齿轮「设置」。'],
+        ['导入表情','选「导入导出」→「导入表情」，选中导出目录或里面的文件。'],
+        ['在收藏里看','导入完打开「我的收藏」就行。QQ 会自己生成缩略图，原图不动。']],
+  '抖音':[['打开抖音表情面板','点输入框旁笑脸图标，再点左上角「+」。'],
+          ['添加表情','在相册或文件列表里选中导出的表情，可以一次多选。'],
+          ['在聊天里用','回聊天窗口打开表情面板就能看到。']]
+};
+function guide(){
+  const g=GUIDES[target]||GUIDES['微信'];
+  document.getElementById('g-title').textContent='送到 '+target+' · 怎么导回去';
+  document.getElementById('g-url').textContent='emoji-migrator://guide/'+encodeURIComponent(target||'微信');
+  document.getElementById('g-body').innerHTML=g.map((s,i)=>
+    '<div class="gstep"><span class="gn">'+(i+1)+'</span><div><h4>'+s[0]+'</h4><p>'+s[1]+'</p></div></div>').join('');
+  document.getElementById('mask').classList.add('on');
+}
+function closeG(){ document.getElementById('mask').classList.remove('on'); }
+document.getElementById('mask').addEventListener('click', e=>{ if(e.target.id==='mask') closeG(); });
+
+/* ================= toast ================= */
+let tt;
+function toast(m){
+  const el=document.getElementById('toast');
+  el.textContent=m; el.classList.add('on');
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),2300);
+}
+
+render();
+</script>
+</body>
+</html>

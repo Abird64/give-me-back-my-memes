@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+build/
+dist/
+# 打包的并行输出目录（RUN-20261020-010：用户正在运行 dist/ 里的 exe，
+# Windows 拒绝删除占用文件，故打包到 dist-v2 避开；同样不入库）
+dist-v2/
+*.spec
+.venv/
+venv/
+*.log
+_tmp/
+_archived/
+_out/
+.workbuddy/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+# 内部方案文档（选型研究/路线定案，含本机实测数据）——不随公开仓库分发
+内部文档/
+# 本机专有值（wxid / seed / 派生 key / 真实账号）——测试闸门的数据源，绝不入库
+tests/_private_values.json

@@ -1,0 +1,6 @@
+PASS: import emoji_migrator 全部子模块 + PySide6.QtWidgets + PIL
+PASS: ffmpeg -version 退出码 0 且输出含 'ffmpeg version' —— ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers
+PASS: GUIDES 每套 step1.png 随包存在 —— 共 3 套，PACKAGE_ROOT 已指向 _MEIPASS 解包目录
+PASS: GUIDES 键集合 == 真实目标平台值集合（wechat/qq/douyin） —— guides=['douyin', 'qq', 'wechat'] platforms=['douyin', 'qq', 'wechat']
+BUNDLE-TOP-LEVEL-PACKAGES: PIL PySide6 imageio imageio_ffmpeg numpy shiboken6 shibokensupport signature_bootstrap
+SELFTEST-OK

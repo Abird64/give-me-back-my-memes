@@ -1,0 +1,59 @@
+# gmssl — BSD 许可证（登记说明与全文）
+
+## 来源口径（如实声明，RUN-20261020-004）
+
+上游项目 **duanhongyi/gmssl**（https://github.com/duanhongyi/gmssl ，PyPI 包名
+`gmssl`）在其 PyPI METADATA 中声明 `License: BSD`，但**未随 wheel / sdist 分发
+许可证全文**（wheel 3.2.2 与 sdist 3.2.1 均无 LICENSE/COPYING 文件，2026-10-20
+实测核对）。GitHub 仓库同样未提供 LICENSE 文件。
+
+因此本文件由两部分构成：
+
+1. 上游声明原文摘录（可直接对账）；
+2. 按上游「BSD」声明**对应的标准 BSD-3-Clause 条款文本**（本仓代录，版权归属行
+   按上游 METADATA 的作者署名填写）。
+
+本仓 vendored 文件 `src/emoji_migrator/_gmssl_sm3.py` / `_gmssl_func.py`
+（gmssl 3.2.2 wheel 原样解出）随本分发受上述条款约束。
+
+## 上游声明（gmssl-3.2.2.dist-info/METADATA 原文行）
+
+```
+Metadata-Version: 2.1
+Name: gmssl
+Version: 3.2.2
+Author: duanhongyi
+Author-email: duanhyi@gmail.com
+Home-page: https://github.com/duanhongyi/gmssl
+License: BSD
+```
+
+## BSD-3-Clause 条款文本
+
+Copyright (c) duanhongyi (duanhyi@gmail.com), https://github.com/duanhongyi/gmssl.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
