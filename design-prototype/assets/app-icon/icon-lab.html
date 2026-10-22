@@ -2,132 +2,74 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
+<title>应用图标 · 仓鼠正面（举镐）</title>
 <style>
-  body { margin: 0; background: #E9E4D8; display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; }
-  canvas { display: block; }
+  body { margin: 0; background: #E9E4D8; display: flex; gap: 28px; padding: 28px;
+         font: 13px/1.5 ui-monospace, Consolas, monospace; color: #3a3530; }
+  figure { margin: 0; }
+  canvas { display: block; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  figcaption { padding-top: 8px; }
 </style>
 </head>
 <body>
-<canvas id="v1" width="1024" height="1024"></canvas>
-<canvas id="v2" width="1024" height="1024"></canvas>
-<canvas id="v3" width="1024" height="1024"></canvas>
-<canvas id="v4" width="1024" height="1024"></canvas>
+<!--
+  应用图标现行稿：仓鼠正面（安全帽 + 镐），扁平贴纸风，黄底黑描边。
+
+  这个文件是「图标母版」的唯一生成源，旁边 hamster-front.svg 是角色素材。
+  派生文件（同目录）：
+    app-icon-transparent.png  1024  全出血、透明背景   ← 本页左图另存
+    icon-1024.png             1024  白底 logo 版（作品缩到 ink 宽 ~760 居中）
+    icon-512.png / icon-256.png    icon-1024 的等比缩小
+    app-icon.ico              16/24/32/48/64/128/256 多尺寸（由全出血母版降采样）
+  README 里引的是 icon-256.png；PyInstaller 用 app-icon.ico（见 build/emoji-migrator.spec）。
+  改图标 = 改这里 → 重新导出上面那几个文件，别直接改 PNG。
+-->
+<figure>
+  <canvas id="master" width="1024" height="1024"></canvas>
+  <figcaption>① app-icon-transparent.png（1024，全出血）</figcaption>
+</figure>
+<figure>
+  <canvas id="logo" width="1024" height="1024"></canvas>
+  <figcaption>② icon-1024.png（白底 logo 版）</figcaption>
+</figure>
 <script>
-const INK = '#1B1B1F', YEL = '#FFD23F', PAPER = '#FFFCF5', MAG = '#FF3D8F', VIO = '#7C4DFF',
-      WX = '#2FBF71', QQ = '#1DA1F2', DY = '#FF2E4D', TEAL = '#15C4C4', TONGUE = '#FF6B7E';
+const INK = '#282320', YEL = '#FFD23F';
+const SRC = 'hamster-front.svg';
 
-function rr(c, x, y, w, h, r) {
+/* 圆角方贴纸：932 见方、46 内缩、196 圆角、38 描边 */
+function plate(c) {
   c.beginPath();
-  c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
-}
-function plate(c, x, y, w, h, r, fill, { lw = 26, sh = 34, rot = 0 } = {}) {
-  c.save(); c.translate(x + w / 2, y + h / 2); c.rotate(rot); c.translate(-w / 2, -h / 2);
-  c.fillStyle = INK; rr(c, sh, sh, w, h, r); c.fill();
-  c.fillStyle = fill; rr(c, 0, 0, w, h, r); c.fill();
-  c.strokeStyle = INK; c.lineWidth = lw; c.lineJoin = 'round'; rr(c, 0, 0, w, h, r); c.stroke();
-  c.restore();
-}
-function spark(c, x, y, R, col) {
-  const r = R * 0.25, pts = [];
-  for (let i = 0; i < 4; i++) {
-    const a = i * Math.PI / 2;
-    pts.push([x + Math.cos(a) * R, y + Math.sin(a) * R]);
-    const a2 = a + Math.PI / 4;
-    pts.push([x + Math.cos(a2) * r, y + Math.sin(a2) * r]);
-  }
-  c.save(); c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath();
-  c.fillStyle = col; c.fill(); c.strokeStyle = INK; c.lineWidth = 12; c.stroke(); c.restore();
-}
-// 表情包脸：^^ 眼 + 大张嘴笑 + 舌头 + 泪
-function emoFace(c, cx, cy, s, { lw = 24, tear = TEAL, tongue = true } = {}) {
-  c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = INK; c.lineWidth = lw;
-  for (const sg of [-1, 1]) {
-    c.beginPath(); c.arc(cx + sg * s * 0.36, cy - s * 0.10, s * 0.20, Math.PI * 1.18, Math.PI * 1.82); c.stroke();
-  }
-  // 大张嘴：黑色填充，下凸半圆
-  const mw = s * 0.50, mh = s * 0.40, my = cy + s * 0.08;
-  c.beginPath(); c.moveTo(cx - mw, my); c.quadraticCurveTo(cx, my + mh * 1.9, cx + mw, my); c.closePath();
-  c.fillStyle = INK; c.fill();
-  // 舌头（可选）
-  if (tongue) {
-    c.save(); c.beginPath(); c.moveTo(cx - mw, my); c.quadraticCurveTo(cx, my + mh * 1.9, cx + mw, my); c.closePath(); c.clip();
-    c.fillStyle = TONGUE; c.beginPath(); c.ellipse(cx, my + mh * 1.18, mw * 0.55, mh * 0.52, 0, 0, 7); c.fill(); c.restore();
-  }
-  // 泪（可选）
-  if (tear) {
-    c.fillStyle = tear;
-    c.beginPath(); c.moveTo(cx - s * 0.56, cy + s * 0.06);
-    c.quadraticCurveTo(cx - s * 0.70, cy + s * 0.30, cx - s * 0.52, cy + s * 0.30);
-    c.quadraticCurveTo(cx - s * 0.40, cy + s * 0.26, cx - s * 0.56, cy + s * 0.06); c.fill();
-  }
-  c.restore();
+  c.roundRect(46, 46, 932, 932, 196);
+  c.fillStyle = YEL; c.fill();
+  c.lineWidth = 38; c.strokeStyle = INK; c.stroke();
 }
 
-/* V1 回旋：紫底 + 黄脸 + 白色回旋箭头（表情回来了） */
-(() => {
-  const c = document.getElementById('v1').getContext('2d');
-  plate(c, 96, 96, 832, 832, 190, VIO);
-  plate(c, 246, 178, 532, 532, 64, YEL, { lw: 24, sh: 26 });
-  emoFace(c, 512, 454, 240, { lw: 24 });
-  // 回旋箭头：贴纸右下角外侧绕一圈
-  const cx0 = 736, cy0 = 742, R0 = 118;
-  const arcPath = (g) => { g.beginPath(); g.arc(cx0, cy0, R0, -0.42 * Math.PI, 0.96 * Math.PI); };
-  c.save(); c.lineCap = 'round';
-  c.strokeStyle = INK; c.lineWidth = 62; arcPath(c); c.stroke();
-  c.strokeStyle = PAPER; c.lineWidth = 32; arcPath(c); c.stroke();
-  // 箭尖（在弧起点，沿切线方向）
-  const a0 = -0.42 * Math.PI, px = cx0 + Math.cos(a0) * R0, py = cy0 + Math.sin(a0) * R0;
-  c.save(); c.translate(px, py); c.rotate(a0 - Math.PI / 2);
-  c.fillStyle = PAPER; c.strokeStyle = INK; c.lineWidth = 16;
-  c.beginPath(); c.moveTo(0, -8); c.lineTo(62, 44); c.lineTo(-16, 52); c.closePath(); c.fill(); c.stroke();
-  c.restore(); c.restore();
-  spark(c, 800, 196, 48, PAPER);
-})();
-
-/* V2 三平台：品红底 + 黄脸 + 下方三个平台圆点 */
-(() => {
-  const c = document.getElementById('v2').getContext('2d');
-  plate(c, 96, 96, 832, 832, 190, MAG);
-  plate(c, 208, 138, 608, 552, 64, YEL, { lw: 24, sh: 24 });
-  emoFace(c, 512, 414, 262, { lw: 24 });
-  const dot = (x, col) => {
-    c.save();
-    c.strokeStyle = INK; c.lineWidth = 20;
-    c.fillStyle = col; c.beginPath(); c.arc(x, 826, 72, 0, 7); c.fill(); c.stroke();
-    c.restore();
-  };
-  dot(360, WX); dot(512, QQ); dot(664, DY);
-})();
-
-/* V3 箱子：黄底 + 品红箱 + 表情从箱口探出 */
-(() => {
-  const c = document.getElementById('v3').getContext('2d');
-  plate(c, 96, 96, 832, 832, 190, YEL);
-  // 表情（在箱子后面）
-  plate(c, 300, 210, 424, 424, 56, PAPER, { lw: 22, sh: 18 });
-  emoFace(c, 512, 412, 206, { lw: 22 });
-  // 箱体
-  plate(c, 214, 540, 596, 300, 44, MAG, { lw: 26, sh: 24 });
-  // 箱口内衬
+/* 角色：和分镜里用的是同一张，1024 画布缩放到 (120,96,784) 摆位 */
+function drawMaster(c, img, scale = 1, clear = true) {
+  if (clear) c.clearRect(0, 0, 1024, 1024);
   c.save();
-  c.fillStyle = INK; rr(c, 262, 526, 500, 66, 22); c.fill();
-  c.fillStyle = '#F0DDB6'; rr(c, 274, 534, 476, 34, 14); c.fill();
-  c.restore();
-  // 两条胶带（斜拉，不是竖柱）
-  c.save(); c.fillStyle = 'rgba(255,252,245,.85)'; c.strokeStyle = INK; c.lineWidth = 10;
-  for (const sx of [330, 694]) {
-    c.beginPath(); c.moveTo(sx, 596); c.lineTo(sx + 46, 596); c.lineTo(sx + 46, 812); c.lineTo(sx, 812); c.closePath(); c.fill(); c.stroke();
+  if (scale !== 1) {                     // logo 版整体缩到中心
+    c.translate(512, 512); c.scale(scale, scale); c.translate(-512, -512);
   }
+  plate(c);
+  c.save();
+  c.beginPath(); c.roundRect(46, 46, 932, 932, 196); c.clip();
+  c.drawImage(img, 0, 0, 1024, 1024, 120, 96, 784, 784);
   c.restore();
-})();
+  c.restore();
+}
 
-/* V4 最终版：黄方贴纸 + 黑边 + 硬阴影 + 笑脸（无泪、无星芒） */
-(() => {
-  const c = document.getElementById('v4').getContext('2d');
-  plate(c, 150, 130, 700, 700, 100, YEL, { lw: 26, sh: 34 });
-  emoFace(c, 500, 470, 300, { lw: 28, tear: null, tongue: false });
-})();
+const img = new Image();
+img.onload = () => {
+  drawMaster(document.getElementById('master').getContext('2d'), img, 1);
+  const lg = document.getElementById('logo');
+  const lc = lg.getContext('2d');
+  lc.fillStyle = '#FFFFFF'; lc.fillRect(10, 10, 1004, 1004);   // 白底 10px 透明边
+  drawMaster(lc, img, 760 / 970, false);                       // ink 宽 970 → 760
+};
+img.onerror = () => { document.body.insertAdjacentHTML('beforeend',
+  '<p style="color:#b00">hamster-front.svg 没加载到——本页需要和它放在同一目录。</p>'); };
+img.src = SRC;
 </script>
 </body>
 </html>
